@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import type { RefObject } from 'react'
 import * as faceapi from 'face-api.js'
+import type { EmocionDetectada } from '../types/domain'
 
 const MODELS_URL = '/models' // los modelos van en /public/models
 
 // Mapeo de expresiones face-api → TipoEmocion del backend
-const mapearEmocion = (expressions) => {
+const mapearEmocion = (expressions: Record<string, number>): EmocionDetectada => {
   const { happy, sad, angry, fearful, disgusted, surprised, neutral } = expressions
   const mapa = { happy, sad, angry, fearful, disgusted, surprised, neutral }
   const dominante = Object.entries(mapa).reduce((a, b) => a[1] > b[1] ? a : b)
 
-  const tabla = {
+  const tabla: Record<string, EmocionDetectada['tipo']> = {
     happy:     'FELIZ',
     sad:       'TRISTE',
     angry:     'ENOJADO',
@@ -25,11 +27,11 @@ const mapearEmocion = (expressions) => {
   }
 }
 
-export function useEmotionDetector(videoRef) {
+export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
   const [modelosCargados, setModelosCargados] = useState(false)
-  const [emocionActual, setEmocionActual]     = useState({ tipo: 'NEUTRAL', intensidad: 0, raw: 'neutral' })
-  const [errorCamara, setErrorCamara]         = useState(null)
-  const intervaloRef = useRef(null)
+  const [emocionActual, setEmocionActual]     = useState<EmocionDetectada>({ tipo: 'NEUTRAL', intensidad: 0, raw: 'neutral' })
+  const [errorCamara, setErrorCamara]         = useState<string | null>(null)
+  const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Cargar modelos de face-api.js
   useEffect(() => {
@@ -41,7 +43,8 @@ export function useEmotionDetector(videoRef) {
         ])
         setModelosCargados(true)
       } catch (e) {
-        console.warn('No se pudieron cargar los modelos de face-api:', e.message)
+        const error = e as Error
+        console.warn('No se pudieron cargar los modelos de face-api:', error.message)
         // La app sigue funcionando sin detección facial
       }
     }
@@ -63,14 +66,17 @@ export function useEmotionDetector(videoRef) {
           const emocion = mapearEmocion(deteccion.expressions)
           setEmocionActual(emocion)
         }
-      } catch (_) {
+      } catch (_error) {
         // silencioso - no interrumpe el chat
       }
     }, 2000) // detecta cada 2 segundos
   }, [modelosCargados, videoRef])
 
   const detenerDeteccion = useCallback(() => {
-    if (intervaloRef.current) clearInterval(intervaloRef.current)
+    if (intervaloRef.current) {
+      clearInterval(intervaloRef.current)
+      intervaloRef.current = null
+    }
   }, [])
 
   // Iniciar cámara
@@ -82,7 +88,7 @@ export function useEmotionDetector(videoRef) {
         await videoRef.current.play()
         iniciarDeteccion()
       }
-    } catch (e) {
+    } catch (_error) {
       setErrorCamara('No se pudo acceder a la cámara. La emoción se enviará como NEUTRAL.')
     }
   }, [videoRef, iniciarDeteccion])
@@ -90,7 +96,7 @@ export function useEmotionDetector(videoRef) {
   useEffect(() => {
     if (modelosCargados) iniciarCamara()
     return () => detenerDeteccion()
-  }, [modelosCargados])
+  }, [modelosCargados, iniciarCamara, detenerDeteccion])
 
   return { emocionActual, modelosCargados, errorCamara, iniciarCamara }
 }

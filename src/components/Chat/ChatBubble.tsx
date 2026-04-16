@@ -1,11 +1,13 @@
 // Burbuja de mensaje individual del chat
+import type { CSSProperties } from 'react'
+import type { Mensaje, TipoEmocion } from '../../types/domain'
 
-const EMOJIS_EMOCION = {
+const EMOJIS_EMOCION: Record<TipoEmocion, string> = {
   FELIZ: '😊', TRISTE: '😢', ESTRESADO: '😰',
   ENOJADO: '😠', ANSIOSO: '😟', SORPRENDIDO: '😲', NEUTRAL: '😐',
 }
 
-export default function ChatBubble({ mensaje }) {
+export default function ChatBubble({ mensaje }: { mensaje: Mensaje }) {
   const esIA     = mensaje.remitente === 'AI'
   const hora     = new Date(mensaje.fecha).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })
   const emojiEmo = mensaje.emocionAsociada ? EMOJIS_EMOCION[mensaje.emocionAsociada] : null
@@ -24,7 +26,7 @@ export default function ChatBubble({ mensaje }) {
   )
 }
 
-const styles = {
+const styles: Record<string, CSSProperties> = {
   wrapper: { display: 'flex', alignItems: 'flex-end', gap: 8, marginBottom: 12 },
   avatar:  { fontSize: 28, flexShrink: 0 },
   bubble:  {

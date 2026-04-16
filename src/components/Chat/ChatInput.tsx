@@ -1,19 +1,27 @@
 import { useState } from 'react'
+import type { CSSProperties, FormEvent, KeyboardEvent } from 'react'
 
-export default function ChatInput({ onEnviar, cargando }) {
+interface ChatInputProps {
+  onEnviar: (contenido: string) => void;
+  cargando: boolean;
+}
+
+export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
   const [texto, setTexto] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!texto.trim() || cargando) return
     onEnviar(texto.trim())
     setTexto('')
   }
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSubmit(e)
+      if (!texto.trim() || cargando) return
+      onEnviar(texto.trim())
+      setTexto('')
     }
   }
 
@@ -39,7 +47,7 @@ export default function ChatInput({ onEnviar, cargando }) {
   )
 }
 
-const styles = {
+const styles: Record<string, CSSProperties> = {
   form: {
     display: 'flex', alignItems: 'center', gap: 10,
     background: '#fff', borderRadius: 18,

@@ -1,6 +1,8 @@
 // Muestra la emoción detectada en tiempo real
+import type { CSSProperties } from 'react'
+import type { EmocionDetectada, TipoEmocion } from '../../types/domain'
 
-const EMOCIONES = {
+const EMOCIONES: Record<TipoEmocion, { emoji: string; label: string; color: string }> = {
   FELIZ:       { emoji: '😊', label: 'Feliz',       color: '#FFD700' },
   TRISTE:      { emoji: '😢', label: 'Triste',      color: '#6CA0DC' },
   ESTRESADO:   { emoji: '😰', label: 'Estresado',   color: '#FF6B6B' },
@@ -10,7 +12,11 @@ const EMOCIONES = {
   NEUTRAL:     { emoji: '😐', label: 'Neutral',     color: '#A8D5A2' },
 }
 
-export default function EmotionBadge({ emocion }) {
+interface EmotionBadgeProps {
+  emocion: EmocionDetectada;
+}
+
+export default function EmotionBadge({ emocion }: EmotionBadgeProps) {
   const info = EMOCIONES[emocion?.tipo] || EMOCIONES.NEUTRAL
 
   return (
@@ -29,7 +35,7 @@ export default function EmotionBadge({ emocion }) {
   )
 }
 
-const styles = {
+const styles: Record<string, CSSProperties> = {
   badge: {
     display: 'flex', alignItems: 'center', gap: 10,
     background: '#fff', border: '2px solid',

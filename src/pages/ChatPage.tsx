@@ -1,11 +1,13 @@
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CameraPanel from '../components/Camera/CameraPanel'
 import ChatWindow from '../components/Chat/ChatWindow'
 import { useAuth } from '../context/AuthContext'
+import type { EmocionDetectada } from '../types/domain'
 
 export default function ChatPage() {
-  const [emocionActual, setEmocionActual] = useState({ tipo: 'NEUTRAL', intensidad: 0 })
+  const [emocionActual, setEmocionActual] = useState<EmocionDetectada>({ tipo: 'NEUTRAL', intensidad: 0 })
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
 
@@ -47,7 +49,7 @@ export default function ChatPage() {
   )
 }
 
-const styles = {
+const styles: Record<string, CSSProperties> = {
   page: {
     height: '100vh', display: 'flex', flexDirection: 'column',
     background: '#F0F2F5',
