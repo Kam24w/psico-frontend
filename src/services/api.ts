@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { AuthPayload, LoginRequest, Mensaje, RegisterRequest, TipoEmocion } from '../types/domain'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
@@ -10,7 +11,13 @@ const api = axios.create({
 // Interceptor: añade token JWT a cada petición
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('psico_token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (token) {
+    if (config.headers) {
+      ;(config.headers as Record<string, string>).Authorization = `Bearer ${token}`
+    } else {
+      config.headers = { Authorization: `Bearer ${token}` } as never
+    }
+  }
   return config
 })
 
@@ -29,25 +36,25 @@ api.interceptors.response.use(
 
 // ── Auth ──────────────────────────────────────────
 export const authService = {
-  login:    (data) => api.post('/api/auth/login', data),
-  register: (data) => api.post('/api/auth/register', data),
+  login:    (data: LoginRequest) => api.post<AuthPayload>('/api/auth/login', data),
+  register: (data: RegisterRequest) => api.post<AuthPayload>('/api/auth/register', data),
 }
 
 // ── Conversación ──────────────────────────────────
 export const conversacionService = {
-  enviarMensaje: (usuarioId, contenido, emocion) =>
-    api.post('/api/conversacion/mensaje', { usuarioId, contenido, emocion }),
-  obtenerHistorial: (conversacionId) =>
-    api.get(`/api/conversacion/historial/${conversacionId}`),
-  obtenerConversaciones: (usuarioId) =>
-    api.get(`/api/conversacion/usuario/${usuarioId}`),
+  enviarMensaje: (usuarioId: number, contenido: string, emocion: TipoEmocion) =>
+    api.post<Mensaje>('/api/conversacion/mensaje', { usuarioId, contenido, emocion }),
+  obtenerHistorial: (conversacionId: number) =>
+    api.get<Mensaje[]>(`/api/conversacion/historial/${conversacionId}`),
+  obtenerConversaciones: (usuarioId: number) =>
+    api.get<Mensaje[]>(`/api/conversacion/usuario/${usuarioId}`),
 }
 
 // ── Emoción ───────────────────────────────────────
 export const emocionService = {
-  registrar: (usuarioId, tipo, intensidad) =>
+  registrar: (usuarioId: number, tipo: TipoEmocion, intensidad: number) =>
     api.post('/api/emocion', { usuarioId, tipo, intensidad }),
-  obtenerHistorial: (usuarioId) =>
+  obtenerHistorial: (usuarioId: number) =>
     api.get(`/api/emocion/historial/${usuarioId}`),
 }
 

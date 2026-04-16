@@ -1,14 +1,20 @@
 import { useState, useEffect, useRef } from 'react'
+import type { CSSProperties } from 'react'
 import ChatBubble from './ChatBubble'
 import ChatInput from './ChatInput'
 import { conversacionService, emocionService } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import type { EmocionDetectada, Mensaje } from '../../types/domain'
 
-export default function ChatWindow({ emocionActual }) {
+interface ChatWindowProps {
+  emocionActual: EmocionDetectada;
+}
+
+export default function ChatWindow({ emocionActual }: ChatWindowProps) {
   const { usuario }   = useAuth()
-  const [mensajes, setMensajes] = useState([])
+  const [mensajes, setMensajes] = useState<Mensaje[]>([])
   const [cargando, setCargando] = useState(false)
-  const bottomRef = useRef(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
 
   // Mensaje de bienvenida
   useEffect(() => {
@@ -26,11 +32,11 @@ export default function ChatWindow({ emocionActual }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [mensajes])
 
-  const enviarMensaje = async (contenido) => {
+  const enviarMensaje = async (contenido: string) => {
     if (!usuario?.id) return
 
     // Mostrar mensaje del usuario inmediatamente
-    const msgUsuario = {
+    const msgUsuario: Mensaje = {
       id: Date.now(),
       contenido,
       remitente: 'USER',
@@ -59,7 +65,7 @@ export default function ChatWindow({ emocionActual }) {
 
       // Mostrar respuesta de la IA
       setMensajes(prev => [...prev, res.data])
-    } catch (err) {
+    } catch (_err) {
       setMensajes(prev => [...prev, {
         id: Date.now() + 1,
         contenido: 'Lo siento, hubo un problema al procesar tu mensaje. ¿Puedes intentarlo de nuevo?',
@@ -108,7 +114,7 @@ export default function ChatWindow({ emocionActual }) {
   )
 }
 
-const styles = {
+const styles: Record<string, CSSProperties> = {
   container: {
     flex: 1, display: 'flex', flexDirection: 'column',
     background: '#F8F8FF', borderRadius: 20,

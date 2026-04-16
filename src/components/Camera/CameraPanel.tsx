@@ -1,9 +1,15 @@
 import { useRef } from 'react'
+import type { CSSProperties } from 'react'
 import { useEmotionDetector } from '../../hooks/useEmotionDetector'
 import EmotionBadge from './EmotionBadge'
+import type { EmocionDetectada } from '../../types/domain'
 
-export default function CameraPanel({ onEmocionCambia }) {
-  const videoRef = useRef(null)
+interface CameraPanelProps {
+  onEmocionCambia?: (emocion: EmocionDetectada) => void;
+}
+
+export default function CameraPanel({ onEmocionCambia }: CameraPanelProps) {
+  const videoRef = useRef<HTMLVideoElement>(null)
   const { emocionActual, modelosCargados, errorCamara } = useEmotionDetector(videoRef)
 
   // Notificar al padre cuando cambia la emoción
@@ -39,7 +45,7 @@ export default function CameraPanel({ onEmocionCambia }) {
   )
 }
 
-const styles = {
+const styles: Record<string, CSSProperties> = {
   panel: {
     display: 'flex', flexDirection: 'column', alignItems: 'center',
     gap: 12, padding: 16,

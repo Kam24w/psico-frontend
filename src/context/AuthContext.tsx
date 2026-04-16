@@ -1,10 +1,20 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import type { ReactNode } from 'react'
+import type { AuthPayload, Usuario } from '../types/domain'
 
-const AuthContext = createContext(null)
+interface AuthContextValue {
+  usuario: Usuario | null;
+  token: string | null;
+  login: (data: AuthPayload) => void;
+  logout: () => void;
+  cargando: boolean;
+}
 
-export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(null)
-  const [token, setToken]     = useState(null)
+const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [usuario, setUsuario] = useState<Usuario | null>(null)
+  const [token, setToken]     = useState<string | null>(null)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -17,7 +27,7 @@ export function AuthProvider({ children }) {
     setCargando(false)
   }, [])
 
-  const login = (data) => {
+  const login = (data: AuthPayload) => {
     setToken(data.token)
     setUsuario({ id: data.usuarioId, nombre: data.nombre, email: data.email })
     localStorage.setItem('psico_token', data.token)
@@ -40,4 +50,10 @@ export function AuthProvider({ children }) {
   )
 }
 
-export const useAuth = () => useContext(AuthContext)
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth debe usarse dentro de AuthProvider')
+  }
+  return context
+}
