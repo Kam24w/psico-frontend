@@ -6,9 +6,15 @@ const EMOJIS_EMOCION: Record<TipoEmocion, string> = {
   ENOJADO: '😠', ANSIOSO: '😟', SORPRENDIDO: '😲', NEUTRAL: '😐',
 }
 
+function formatearHora(fecha: string): string {
+  const date = new Date(fecha)
+  if (Number.isNaN(date.getTime())) return '--:--'
+  return date.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })
+}
+
 export default function ChatBubble({ mensaje }: { mensaje: Mensaje }) {
   const esIA     = mensaje.remitente === 'AI'
-  const hora     = new Date(mensaje.fecha).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })
+  const hora     = formatearHora(mensaje.fecha)
   const emojiEmo = mensaje.emocionAsociada ? EMOJIS_EMOCION[mensaje.emocionAsociada] : null
 
   return (

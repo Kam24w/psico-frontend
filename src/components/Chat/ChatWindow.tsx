@@ -10,6 +10,67 @@ interface ChatWindowProps {
   emocionActual: EmocionDetectada;
 }
 
+type RawMensaje = Partial<Mensaje> & {
+  fecha?: unknown;
+  remitente?: unknown;
+  emocionAsociada?: unknown;
+};
+
+function toIsoFromJavaArray(value: unknown): string | null {
+  if (!Array.isArray(value) || value.length < 5) return null;
+
+  const [year, month, day, hour, minute, second = 0, nano = 0] = value;
+  if (
+    typeof year !== 'number' ||
+    typeof month !== 'number' ||
+    typeof day !== 'number' ||
+    typeof hour !== 'number' ||
+    typeof minute !== 'number' ||
+    typeof second !== 'number' ||
+    typeof nano !== 'number'
+  ) {
+    return null;
+  }
+
+  const millis = Math.floor(nano / 1_000_000);
+  const pad = (num: number, size = 2) => String(num).padStart(size, '0');
+  return `${pad(year, 4)}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:${pad(second)}.${pad(millis, 3)}`;
+}
+
+function sanitizeIsoDate(value: string): string {
+  // Java LocalDateTime puede venir con nanosegundos; JS Date acepta milisegundos.
+  return value.replace(/(\.\d{3})\d+/, '$1');
+}
+
+function normalizarMensaje(raw: RawMensaje, fallbackText: string): Mensaje {
+  const rawDate = raw.fecha;
+  const fecha = typeof rawDate === 'string'
+    ? sanitizeIsoDate(rawDate)
+    : toIsoFromJavaArray(rawDate) || new Date().toISOString();
+
+  const remitente = raw.remitente === 'AI' ? 'AI' : 'USER';
+  const emocionAsociada =
+    raw.emocionAsociada === 'FELIZ' ||
+    raw.emocionAsociada === 'TRISTE' ||
+    raw.emocionAsociada === 'ESTRESADO' ||
+    raw.emocionAsociada === 'ENOJADO' ||
+    raw.emocionAsociada === 'ANSIOSO' ||
+    raw.emocionAsociada === 'SORPRENDIDO' ||
+    raw.emocionAsociada === 'NEUTRAL'
+      ? raw.emocionAsociada
+      : null;
+
+  return {
+    id: typeof raw.id === 'number' ? raw.id : Date.now(),
+    contenido: typeof raw.contenido === 'string' && raw.contenido.trim()
+      ? raw.contenido
+      : fallbackText,
+    remitente,
+    emocionAsociada,
+    fecha,
+  };
+}
+
 export default function ChatWindow({ emocionActual }: ChatWindowProps) {
   const texts = UI_TEXTS.chatWindow
   const { usuario }   = useAuth()
@@ -65,7 +126,7 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
       )
 
       // Mostrar respuesta de la IA
-      setMensajes(prev => [...prev, res.data])
+      setMensajes(prev => [...prev, normalizarMensaje(res.data as RawMensaje, texts.genericErrorResponse)])
     } catch (_err) {
       setMensajes(prev => [...prev, {
         id: Date.now() + 1,
