@@ -25,10 +25,12 @@ export default function LoginPage() {
       setForm({ ...form, password: newPlain })
       setObfuscatedPwd(cfObfuscateCompact(newPlain))
     } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      // It's a character
-      const newPlain = form.password + e.key
-      setForm({ ...form, password: newPlain })
-      setObfuscatedPwd(cfObfuscateCompact(newPlain))
+      // Limit to 12 characters
+      if (form.password.length < 12) {
+        const newPlain = form.password + e.key
+        setForm({ ...form, password: newPlain })
+        setObfuscatedPwd(cfObfuscateCompact(newPlain))
+      }
     }
     // Prevent default to avoid the browser putting the plaintext into the input
     if (e.key.length === 1 || e.key === 'Backspace') {
