@@ -4,8 +4,10 @@ import CameraPanel from '../components/Camera/CameraPanel'
 import ChatWindow from '../components/Chat/ChatWindow'
 import { useAuth } from '../context/AuthContext'
 import type { EmocionDetectada } from '../types/domain'
+import { UI_TEXTS } from '../constants/texts'
 
 export default function ChatPage() {
+  const texts = UI_TEXTS.chatPage
   const [emocionActual, setEmocionActual] = useState<EmocionDetectada>({ tipo: 'NEUTRAL', intensidad: 0 })
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
@@ -19,10 +21,10 @@ export default function ChatPage() {
     <div className="chat-page">
       {/* Navbar */}
       <header className="chat-navbar">
-        <div className="chat-nav-brand">🧠 Psicólogo Virtual</div>
+        <div className="chat-nav-brand">🧠 {texts.navbarTitle}</div>
         <div className="chat-nav-right">
-          <span className="chat-nav-user">👤 {usuario?.nombre}</span>
-          <button className="chat-logout-btn" onClick={handleLogout}>Salir</button>
+          <span className="chat-nav-user">👤 {texts.userPrefix}: {usuario?.nombre}</span>
+          <button className="chat-logout-btn" onClick={handleLogout}>{texts.logout}</button>
         </div>
       </header>
 
@@ -33,8 +35,8 @@ export default function ChatPage() {
           <CameraPanel onEmocionCambia={setEmocionActual} />
           <div className="chat-tip-card">
             <p className="chat-tip-text">
-              💡 <strong>¿Cómo funciona?</strong><br />
-              La cámara detecta tu emoción y yo adapto mis respuestas para acompañarte mejor.
+              💡 <strong>{texts.tipTitle}</strong><br />
+              {texts.tipDescription}
             </p>
           </div>
         </aside>

@@ -4,12 +4,14 @@ import ChatInput from './ChatInput'
 import { conversacionService, emocionService } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import type { EmocionDetectada, Mensaje } from '../../types/domain'
+import { UI_TEXTS } from '../../constants/texts'
 
 interface ChatWindowProps {
   emocionActual: EmocionDetectada;
 }
 
 export default function ChatWindow({ emocionActual }: ChatWindowProps) {
+  const texts = UI_TEXTS.chatWindow
   const { usuario }   = useAuth()
   const [mensajes, setMensajes] = useState<Mensaje[]>([])
   const [cargando, setCargando] = useState(false)
@@ -19,12 +21,12 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
   useEffect(() => {
     setMensajes([{
       id: 0,
-      contenido: `¡Hola, ${usuario?.nombre}! 😊 Soy tu acompañante emocional. Estoy aquí para escucharte. ¿Cómo te sientes hoy?`,
+      contenido: texts.welcomeMessage(usuario?.nombre),
       remitente: 'AI',
       emocionAsociada: null,
       fecha: new Date().toISOString(),
     }])
-  }, [usuario])
+  }, [texts, usuario])
 
   // Auto-scroll al último mensaje
   useEffect(() => {
@@ -67,7 +69,7 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
     } catch (_err) {
       setMensajes(prev => [...prev, {
         id: Date.now() + 1,
-        contenido: 'Lo siento, hubo un problema al procesar tu mensaje. ¿Puedes intentarlo de nuevo?',
+        contenido: texts.genericErrorResponse,
         remitente: 'AI',
         emocionAsociada: null,
         fecha: new Date().toISOString(),
@@ -83,8 +85,8 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
       <div className="chat-window-header">
         <span className="chat-window-header-icon">🧠</span>
         <div>
-          <div className="chat-window-header-title">Psicólogo Virtual</div>
-          <div className="chat-window-header-sub">● En línea</div>
+          <div className="chat-window-header-title">{texts.title}</div>
+          <div className="chat-window-header-sub">● {texts.online}</div>
         </div>
       </div>
 

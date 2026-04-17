@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import type { RefObject } from 'react'
 import * as faceapi from 'face-api.js'
 import type { EmocionDetectada } from '../types/domain'
+import { UI_TEXTS } from '../constants/texts'
 
 const MODELS_URL = '/models' // los modelos van en /public/models
 
@@ -89,7 +90,7 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
         iniciarDeteccion()
       }
     } catch (_error) {
-      setErrorCamara('No se pudo acceder a la cámara. La emoción se enviará como NEUTRAL.')
+      setErrorCamara(UI_TEXTS.camera.hookCameraError)
     }
   }, [videoRef, iniciarDeteccion])
 

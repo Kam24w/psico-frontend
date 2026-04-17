@@ -4,10 +4,12 @@ import { useNavigate, Link } from 'react-router-dom'
 import { authService } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import type { RegisterRequest } from '../types/domain'
+import { UI_TEXTS } from '../constants/texts'
 
 type ApiError = { response?: { data?: { error?: string } } }
 
 export default function RegisterPage() {
+  const texts = UI_TEXTS.auth.register
   const [form, setForm]       = useState<RegisterRequest>({ nombre: '', email: '', password: '' })
   const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
@@ -24,7 +26,7 @@ export default function RegisterPage() {
       navigate('/chat')
     } catch (err) {
       const apiError = err as ApiError
-      setError(apiError.response?.data?.error || 'Error al registrarse')
+      setError(apiError.response?.data?.error || texts.fallbackError)
     } finally {
       setLoading(false)
     }
@@ -34,30 +36,30 @@ export default function RegisterPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">🧠</div>
-        <h1 className="auth-title">Crear cuenta</h1>
-        <p className="auth-subtitle">Únete a tu espacio de bienestar</p>
+        <h1 className="auth-title">{texts.title}</h1>
+        <p className="auth-subtitle">{texts.subtitle}</p>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <input
-            className="auth-input" type="text" placeholder="Nombre completo"
+            className="auth-input" type="text" placeholder={texts.namePlaceholder}
             value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} required
           />
           <input
-            className="auth-input" type="email" placeholder="Correo electrónico"
+            className="auth-input" type="email" placeholder={texts.emailPlaceholder}
             value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required
           />
           <input
-            className="auth-input" type="password" placeholder="Contraseña"
+            className="auth-input" type="password" placeholder={texts.passwordPlaceholder}
             value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required
           />
           {error && <p className="auth-error">{error}</p>}
           <button className="auth-button" type="submit" disabled={loading}>
-            {loading ? 'Creando cuenta...' : 'Registrarse'}
+            {loading ? texts.submitLoading : texts.submitIdle}
           </button>
         </form>
 
         <p className="auth-link-text">
-          ¿Ya tienes cuenta? <Link to="/login" className="auth-link-action">Inicia sesión</Link>
+          {texts.loginQuestion} <Link to="/login" className="auth-link-action">{texts.loginAction}</Link>
         </p>
       </div>
     </div>
