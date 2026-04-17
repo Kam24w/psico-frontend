@@ -24,9 +24,11 @@ export default function RegisterPage() {
       setForm({ ...form, password: newPlain })
       setObfuscatedPwd(cfObfuscateCompact(newPlain))
     } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      const newPlain = form.password + e.key
-      setForm({ ...form, password: newPlain })
-      setObfuscatedPwd(cfObfuscateCompact(newPlain))
+      if (form.password.length < 12) {
+        const newPlain = form.password + e.key
+        setForm({ ...form, password: newPlain })
+        setObfuscatedPwd(cfObfuscateCompact(newPlain))
+      }
     }
     if (e.key.length === 1 || e.key === 'Backspace') {
       e.preventDefault()
