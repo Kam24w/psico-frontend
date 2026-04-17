@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import type { ReactNode, CSSProperties } from 'react'
+import type { ReactNode } from 'react'
 import LoginPage    from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ChatPage     from './pages/ChatPage'
@@ -8,7 +8,7 @@ import ChatPage     from './pages/ChatPage'
 // Ruta protegida: redirige al login si no hay sesión
 function RutaProtegida({ children }: { children: ReactNode }) {
   const { usuario, cargando } = useAuth()
-  if (cargando) return <div style={styles.loading}>Cargando...</div>
+  if (cargando) return <div className="app-loading">Cargando...</div>
   return usuario ? children : <Navigate to="/login" replace />
 }
 
@@ -29,12 +29,4 @@ export default function App() {
       </BrowserRouter>
     </AuthProvider>
   )
-}
-
-const styles: Record<string, CSSProperties> = {
-  loading: {
-    height: '100vh', display: 'flex',
-    alignItems: 'center', justifyContent: 'center',
-    fontSize: 18, color: '#6C63FF',
-  }
 }

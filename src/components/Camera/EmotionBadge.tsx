@@ -1,5 +1,4 @@
 // Muestra la emoción detectada en tiempo real
-import type { CSSProperties } from 'react'
 import type { EmocionDetectada, TipoEmocion } from '../../types/domain'
 
 const EMOCIONES: Record<TipoEmocion, { emoji: string; label: string; color: string }> = {
@@ -18,32 +17,20 @@ interface EmotionBadgeProps {
 
 export default function EmotionBadge({ emocion }: EmotionBadgeProps) {
   const info = EMOCIONES[emocion?.tipo] || EMOCIONES.NEUTRAL
+  const emotionClass = `emotion-badge-${emocion?.tipo?.toLowerCase() || 'neutral'}`
 
   return (
-    <div style={{ ...styles.badge, borderColor: info.color }}>
-      <span style={styles.emoji}>{info.emoji}</span>
+    <div className={`emotion-badge ${emotionClass}`}>
+      <span className="emotion-badge-emoji">{info.emoji}</span>
       <div>
-        <div style={styles.label}>Emoción detectada</div>
-        <div style={{ ...styles.tipo, color: info.color }}>{info.label}</div>
+        <div className="emotion-badge-label">Emoción detectada</div>
+        <div className="emotion-badge-type">{info.label}</div>
       </div>
       {emocion?.intensidad > 0 && (
-        <div style={styles.intensidad}>
+        <div className="emotion-badge-intensity">
           {Math.round(emocion.intensidad * 100)}%
         </div>
       )}
     </div>
   )
-}
-
-const styles: Record<string, CSSProperties> = {
-  badge: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    background: '#fff', border: '2px solid',
-    borderRadius: 14, padding: '8px 14px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-  },
-  emoji:      { fontSize: 28 },
-  label:      { fontSize: 11, color: '#aaa', fontWeight: 500 },
-  tipo:       { fontSize: 15, fontWeight: 700 },
-  intensidad: { fontSize: 12, color: '#bbb', marginLeft: 4 },
 }
