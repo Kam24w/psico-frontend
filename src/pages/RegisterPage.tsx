@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { authService } from '../services/api'
+import { cfObfuscate, cfObfuscateCompact } from '../services/security'
 import { useAuth } from '../context/AuthContext'
 import type { RegisterRequest } from '../types/domain'
 import { UI_TEXTS } from '../constants/texts'
@@ -11,17 +12,36 @@ type ApiError = { response?: { data?: { error?: string } } }
 export default function RegisterPage() {
   const texts = UI_TEXTS.auth.register
   const [form, setForm]       = useState<RegisterRequest>({ nombre: '', email: '', password: '' })
+  const [obfuscatedPwd, setObfuscatedPwd] = useState('')
   const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
   const { login }             = useAuth()
   const navigate              = useNavigate()
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace') {
+      const newPlain = form.password.slice(0, -1)
+      setForm({ ...form, password: newPlain })
+      setObfuscatedPwd(cfObfuscateCompact(newPlain))
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      const newPlain = form.password + e.key
+      setForm({ ...form, password: newPlain })
+      setObfuscatedPwd(cfObfuscateCompact(newPlain))
+    }
+    if (e.key.length === 1 || e.key === 'Backspace') {
+      e.preventDefault()
+    }
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setError('')
     try {
-      const res = await authService.register(form)
+      const res = await authService.register({
+        ...form,
+        password: cfObfuscate(form.password)
+      })
       login(res.data)
       navigate('/chat')
     } catch (err) {
@@ -50,7 +70,10 @@ export default function RegisterPage() {
           />
           <input
             className="auth-input" type="password" placeholder={texts.passwordPlaceholder}
-            value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required
+            value={obfuscatedPwd}
+            onKeyDown={handleKeyDown}
+            onChange={() => {}} // Dummy to satisfy React
+            required
           />
           {error && <p className="auth-error">{error}</p>}
           <button className="auth-button" type="submit" disabled={loading}>

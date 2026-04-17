@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { authService } from '../services/api'
+import { cfObfuscate, cfObfuscateCompact } from '../services/security'
 import { useAuth } from '../context/AuthContext'
 import type { LoginRequest } from '../types/domain'
 import { UI_TEXTS } from '../constants/texts'
@@ -11,17 +12,40 @@ type ApiError = { response?: { data?: { error?: string } } }
 export default function LoginPage() {
   const texts = UI_TEXTS.auth.login
   const [form, setForm]     = useState<LoginRequest>({ email: '', password: '' })
+  const [obfuscatedPwd, setObfuscatedPwd] = useState('')
   const [error, setError]   = useState('')
   const [loading, setLoading] = useState(false)
   const { login }           = useAuth()
   const navigate            = useNavigate()
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // We allow control keys like Backspace, Tab, etc.
+    if (e.key === 'Backspace') {
+      const newPlain = form.password.slice(0, -1)
+      setForm({ ...form, password: newPlain })
+      setObfuscatedPwd(cfObfuscateCompact(newPlain))
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      // It's a character
+      const newPlain = form.password + e.key
+      setForm({ ...form, password: newPlain })
+      setObfuscatedPwd(cfObfuscateCompact(newPlain))
+    }
+    // Prevent default to avoid the browser putting the plaintext into the input
+    if (e.key.length === 1 || e.key === 'Backspace') {
+      e.preventDefault()
+    }
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setError('')
     try {
-      const res = await authService.login(form)
+      // Send the standard hex-encoded obfuscated password to the API
+      const res = await authService.login({
+        ...form,
+        password: cfObfuscate(form.password)
+      })
       login(res.data)
       navigate('/chat')
     } catch (err) {
@@ -52,8 +76,9 @@ export default function LoginPage() {
             className="auth-input"
             type="password"
             placeholder={texts.passwordPlaceholder}
-            value={form.password}
-            onChange={e => setForm({ ...form, password: e.target.value })}
+            value={obfuscatedPwd}
+            onKeyDown={handleKeyDown}
+            onChange={() => {}} // Dummy to satisfy React
             required
           />
           {error && <p className="auth-error">{error}</p>}
