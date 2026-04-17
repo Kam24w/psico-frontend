@@ -1,5 +1,4 @@
 import { useRef } from 'react'
-import type { CSSProperties } from 'react'
 import { useEmotionDetector } from '../../hooks/useEmotionDetector'
 import EmotionBadge from './EmotionBadge'
 import type { EmocionDetectada } from '../../types/domain'
@@ -16,55 +15,31 @@ export default function CameraPanel({ onEmocionCambia }: CameraPanelProps) {
   if (onEmocionCambia) onEmocionCambia(emocionActual)
 
   return (
-    <div style={styles.panel}>
-      <div style={styles.videoWrapper}>
+    <div className="camera-panel">
+      <div className="camera-video-wrapper">
         <video
           ref={videoRef}
-          style={styles.video}
+          className="camera-video"
           muted
           playsInline
           autoPlay
         />
         {!modelosCargados && (
-          <div style={styles.overlay}>
-            <span style={styles.overlayText}>🔄 Cargando detección...</span>
+          <div className="camera-overlay">
+            <span className="camera-overlay-text">🔄 Cargando detección...</span>
           </div>
         )}
       </div>
 
       {errorCamara && (
-        <p style={styles.error}>⚠️ {errorCamara}</p>
+        <p className="camera-error">⚠️ {errorCamara}</p>
       )}
 
       <EmotionBadge emocion={emocionActual} />
 
-      <p style={styles.hint}>
+      <p className="camera-hint">
         Tu cámara analiza tu estado emocional en tiempo real para personalizar las respuestas.
       </p>
     </div>
   )
-}
-
-const styles: Record<string, CSSProperties> = {
-  panel: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-    gap: 12, padding: 16,
-    background: '#fff', borderRadius: 20,
-    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-    width: 260,
-  },
-  videoWrapper: { position: 'relative', width: '100%' },
-  video: {
-    width: '100%', borderRadius: 14, background: '#1a1a2e',
-    transform: 'scaleX(-1)', // espejo
-    aspectRatio: '4/3', objectFit: 'cover',
-  },
-  overlay: {
-    position: 'absolute', inset: 0,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(0,0,0,0.5)', borderRadius: 14,
-  },
-  overlayText: { color: '#fff', fontSize: 14 },
-  error: { fontSize: 12, color: '#FF6B6B', textAlign: 'center' },
-  hint:  { fontSize: 11, color: '#aaa', textAlign: 'center', lineHeight: 1.5 },
 }

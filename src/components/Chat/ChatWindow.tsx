@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import type { CSSProperties } from 'react'
 import ChatBubble from './ChatBubble'
 import ChatInput from './ChatInput'
 import { conversacionService, emocionService } from '../../services/api'
@@ -79,27 +78,27 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
   }
 
   return (
-    <div style={styles.container}>
+    <div className="chat-window">
       {/* Header */}
-      <div style={styles.header}>
-        <span style={styles.headerIcon}>🧠</span>
+      <div className="chat-window-header">
+        <span className="chat-window-header-icon">🧠</span>
         <div>
-          <div style={styles.headerTitle}>Psicólogo Virtual</div>
-          <div style={styles.headerSub}>● En línea</div>
+          <div className="chat-window-header-title">Psicólogo Virtual</div>
+          <div className="chat-window-header-sub">● En línea</div>
         </div>
       </div>
 
       {/* Mensajes */}
-      <div style={styles.mensajes}>
+      <div className="chat-window-messages">
         {mensajes.map(msg => (
           <ChatBubble key={msg.id} mensaje={msg} />
         ))}
         {cargando && (
-          <div style={styles.typing}>
-            <div style={styles.typingBubble}>
-              <span style={styles.dot} />
-              <span style={styles.dot} />
-              <span style={styles.dot} />
+          <div className="chat-window-typing-row">
+            <div className="chat-window-typing-bubble">
+              <span className="chat-window-typing-dot" />
+              <span className="chat-window-typing-dot" />
+              <span className="chat-window-typing-dot" />
             </div>
           </div>
         )}
@@ -107,43 +106,9 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
       </div>
 
       {/* Input */}
-      <div style={styles.inputArea}>
+      <div className="chat-window-input-area">
         <ChatInput onEnviar={enviarMensaje} cargando={cargando} />
       </div>
     </div>
   )
-}
-
-const styles: Record<string, CSSProperties> = {
-  container: {
-    flex: 1, display: 'flex', flexDirection: 'column',
-    background: '#F8F8FF', borderRadius: 20,
-    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-    overflow: 'hidden',
-  },
-  header: {
-    display: 'flex', alignItems: 'center', gap: 12,
-    padding: '16px 24px',
-    background: 'linear-gradient(135deg, #6C63FF, #764ba2)',
-    color: '#fff',
-  },
-  headerIcon:  { fontSize: 32 },
-  headerTitle: { fontSize: 18, fontWeight: 700 },
-  headerSub:   { fontSize: 12, opacity: 0.85 },
-  mensajes: {
-    flex: 1, overflowY: 'auto',
-    padding: '20px 24px',
-    display: 'flex', flexDirection: 'column',
-  },
-  inputArea: { padding: '12px 16px', background: '#fff', borderTop: '1px solid #F0F0F0' },
-  typing: { display: 'flex', alignItems: 'flex-end', gap: 8, marginBottom: 12 },
-  typingBubble: {
-    background: '#EFEFFF', borderRadius: 18, borderBottomLeftRadius: 4,
-    padding: '14px 18px', display: 'flex', gap: 5, alignItems: 'center',
-  },
-  dot: {
-    width: 8, height: 8, borderRadius: '50%', background: '#6C63FF',
-    display: 'inline-block',
-    animation: 'bounce 1.4s infinite ease-in-out',
-  },
 }

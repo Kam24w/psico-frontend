@@ -1,5 +1,4 @@
 // Burbuja de mensaje individual del chat
-import type { CSSProperties } from 'react'
 import type { Mensaje, TipoEmocion } from '../../types/domain'
 
 const EMOJIS_EMOCION: Record<TipoEmocion, string> = {
@@ -13,36 +12,15 @@ export default function ChatBubble({ mensaje }: { mensaje: Mensaje }) {
   const emojiEmo = mensaje.emocionAsociada ? EMOJIS_EMOCION[mensaje.emocionAsociada] : null
 
   return (
-    <div style={{ ...styles.wrapper, justifyContent: esIA ? 'flex-start' : 'flex-end' }}>
-      {esIA && <div style={styles.avatar}>🧠</div>}
-      <div style={{ ...styles.bubble, ...(esIA ? styles.bubbleIA : styles.bubbleUser) }}>
-        <p style={styles.texto}>{mensaje.contenido}</p>
-        <div style={styles.meta}>
-          {emojiEmo && !esIA && <span style={styles.emojiMeta}>{emojiEmo}</span>}
-          <span style={styles.hora}>{hora}</span>
+    <div className={`chat-bubble-row ${esIA ? 'chat-bubble-row-ai' : 'chat-bubble-row-user'}`}>
+      {esIA && <div className="chat-bubble-avatar">🧠</div>}
+      <div className={`chat-bubble ${esIA ? 'chat-bubble-ai' : 'chat-bubble-user'}`}>
+        <p className="chat-bubble-text">{mensaje.contenido}</p>
+        <div className="chat-bubble-meta">
+          {emojiEmo && !esIA && <span className="chat-bubble-emoji-meta">{emojiEmo}</span>}
+          <span className="chat-bubble-time">{hora}</span>
         </div>
       </div>
     </div>
   )
-}
-
-const styles: Record<string, CSSProperties> = {
-  wrapper: { display: 'flex', alignItems: 'flex-end', gap: 8, marginBottom: 12 },
-  avatar:  { fontSize: 28, flexShrink: 0 },
-  bubble:  {
-    maxWidth: '72%', padding: '12px 16px',
-    borderRadius: 18, lineHeight: 1.5,
-  },
-  bubbleIA: {
-    background: '#EFEFFF', color: '#2D2D2D',
-    borderBottomLeftRadius: 4,
-  },
-  bubbleUser: {
-    background: 'linear-gradient(135deg, #6C63FF, #764ba2)',
-    color: '#fff', borderBottomRightRadius: 4,
-  },
-  texto:    { fontSize: 15, margin: 0 },
-  meta:     { display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4, marginTop: 4 },
-  emojiMeta: { fontSize: 12, opacity: 0.8 },
-  hora:     { fontSize: 11, opacity: 0.6 },
 }
