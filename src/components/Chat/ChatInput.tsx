@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
+import { UI_TEXTS } from '../../constants/texts'
 
 interface ChatInputProps {
   onEnviar: (contenido: string) => void;
@@ -7,6 +8,7 @@ interface ChatInputProps {
 }
 
 export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
+  const texts = UI_TEXTS.chatInput
   const [texto, setTexto] = useState('')
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -29,7 +31,7 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
     <form onSubmit={handleSubmit} className="chat-input-form">
       <textarea
         className="chat-input-textarea"
-        placeholder="Escribe cómo te sientes hoy..."
+        placeholder={texts.placeholder}
         value={texto}
         onChange={e => setTexto(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -41,7 +43,7 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
         className="chat-input-button"
         disabled={!texto.trim() || cargando}
       >
-        {cargando ? '⏳' : '➤'}
+        {cargando ? texts.loadingIcon : texts.submitIcon}
       </button>
     </form>
   )

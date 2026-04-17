@@ -4,11 +4,12 @@ import type { ReactNode } from 'react'
 import LoginPage    from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ChatPage     from './pages/ChatPage'
+import { UI_TEXTS } from './constants/texts'
 
 // Ruta protegida: redirige al login si no hay sesión
 function RutaProtegida({ children }: { children: ReactNode }) {
   const { usuario, cargando } = useAuth()
-  if (cargando) return <div className="app-loading">Cargando...</div>
+  if (cargando) return <div className="app-loading">{UI_TEXTS.app.loading}</div>
   return usuario ? children : <Navigate to="/login" replace />
 }
 
