@@ -14,6 +14,9 @@ type RawMensaje = Partial<Mensaje> & {
   fecha?: unknown;
   remitente?: unknown;
   emocionAsociada?: unknown;
+  message?: unknown;
+  error?: unknown;
+  text?: unknown;
 };
 
 function toIsoFromJavaArray(value: unknown): string | null {
@@ -42,13 +45,40 @@ function sanitizeIsoDate(value: string): string {
   return value.replace(/(\.\d{3})\d+/, '$1');
 }
 
-function normalizarMensaje(raw: RawMensaje, fallbackText: string): Mensaje {
+function normalizeRemitente(value: unknown, defaultRemitente: 'AI' | 'USER'): 'AI' | 'USER' {
+  if (typeof value !== 'string') return defaultRemitente;
+  const normalized = value.trim().toUpperCase();
+  if (normalized === 'AI' || normalized === 'ASSISTANT' || normalized === 'BOT') return 'AI';
+  if (normalized === 'USER' || normalized === 'USUARIO') return 'USER';
+  return defaultRemitente;
+}
+
+function extractContenido(raw: RawMensaje, fallbackText: string): string {
+  if (typeof raw.contenido === 'string' && raw.contenido.trim()) return raw.contenido;
+  if (typeof raw.message === 'string' && raw.message.trim()) return raw.message;
+  if (typeof raw.error === 'string' && raw.error.trim()) return raw.error;
+  if (typeof raw.text === 'string' && raw.text.trim()) return raw.text;
+  return fallbackText;
+}
+
+function normalizarMensaje(rawInput: unknown, fallbackText: string, defaultRemitente: 'AI' | 'USER' = 'AI'): Mensaje {
+  if (typeof rawInput === 'string' && rawInput.trim()) {
+    return {
+      id: Date.now(),
+      contenido: rawInput,
+      remitente: defaultRemitente,
+      emocionAsociada: null,
+      fecha: new Date().toISOString(),
+    };
+  }
+
+  const raw = (rawInput && typeof rawInput === 'object' ? rawInput : {}) as RawMensaje;
   const rawDate = raw.fecha;
   const fecha = typeof rawDate === 'string'
     ? sanitizeIsoDate(rawDate)
     : toIsoFromJavaArray(rawDate) || new Date().toISOString();
 
-  const remitente = raw.remitente === 'AI' ? 'AI' : 'USER';
+  const remitente = normalizeRemitente(raw.remitente, defaultRemitente);
   const emocionAsociada =
     raw.emocionAsociada === 'FELIZ' ||
     raw.emocionAsociada === 'TRISTE' ||
@@ -62,9 +92,7 @@ function normalizarMensaje(raw: RawMensaje, fallbackText: string): Mensaje {
 
   return {
     id: typeof raw.id === 'number' ? raw.id : Date.now(),
-    contenido: typeof raw.contenido === 'string' && raw.contenido.trim()
-      ? raw.contenido
-      : fallbackText,
+    contenido: extractContenido(raw, fallbackText),
     remitente,
     emocionAsociada,
     fecha,
@@ -126,7 +154,7 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
       )
 
       // Mostrar respuesta de la IA
-      setMensajes(prev => [...prev, normalizarMensaje(res.data as RawMensaje, texts.genericErrorResponse)])
+      setMensajes(prev => [...prev, normalizarMensaje(res.data, texts.genericErrorResponse, 'AI')])
     } catch (_err) {
       setMensajes(prev => [...prev, {
         id: Date.now() + 1,
