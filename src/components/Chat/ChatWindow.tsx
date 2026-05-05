@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import ChatBubble from './ChatBubble'
 import ChatInput from './ChatInput'
 import { conversacionService, emocionService } from '../../services/api'
+import { aiService } from '../../services/aiService'
 import { useAuth } from '../../context/AuthContext'
 import type { EmocionDetectada, Mensaje } from '../../types/domain'
 import { UI_TEXTS } from '../../constants/texts'
@@ -109,24 +110,34 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
     setCargando(true)
 
     try {
-      // Registrar emoción en el backend (Observer)
-      if (emocionActual?.tipo) {
-        await emocionService.registrar(
-          usuario.id,
-          emocionActual.tipo,
-          emocionActual.intensidad || 0.5
-        )
+      // 1. Registrar emoción en el backend (Opcional)
+      try {
+        if (emocionActual?.tipo) {
+          await emocionService.registrar(
+            usuario.id,
+            emocionActual.tipo,
+            emocionActual.intensidad || 0.5
+          )
+        }
+      } catch (e) {
+        console.warn('Backend offline - registro emoción omitido');
       }
 
-      // Enviar mensaje + emoción al backend
-      const res = await conversacionService.enviarMensaje(
-        usuario.id,
+      // 2. Generar respuesta de la IA en TypeScript
+      const textoIA = await aiService.generarRespuesta(
         contenido,
         emocionActual?.tipo || 'NEUTRAL'
       )
 
-      // Mostrar respuesta de la IA
-      setMensajes(prev => [...prev, normalizarMensaje(res.data as RawMensaje, texts.genericErrorResponse)])
+      // 3. Mostrar respuesta
+      const msgIA: Mensaje = {
+        id: Date.now() + 1,
+        contenido: textoIA,
+        remitente: 'AI',
+        emocionAsociada: emocionActual?.tipo || 'NEUTRAL',
+        fecha: new Date().toISOString(),
+      }
+      setMensajes(prev => [...prev, msgIA])
     } catch (_err) {
       setMensajes(prev => [...prev, {
         id: Date.now() + 1,
