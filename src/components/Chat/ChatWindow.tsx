@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import ChatBubble from './ChatBubble'
 import ChatInput from './ChatInput'
-import { conversacionService, emocionService } from '../../services/api'
+import { emocionService } from '../../services/api'
+import { aiService } from '../../services/aiService'
 import { useAuth } from '../../context/AuthContext'
 import type { EmocionDetectada, Mensaje } from '../../types/domain'
 import { UI_TEXTS } from '../../constants/texts'
@@ -14,9 +15,6 @@ type RawMensaje = Partial<Mensaje> & {
   fecha?: unknown;
   remitente?: unknown;
   emocionAsociada?: unknown;
-  message?: unknown;
-  error?: unknown;
-  text?: unknown;
 };
 
 function toIsoFromJavaArray(value: unknown): string | null {
@@ -45,40 +43,13 @@ function sanitizeIsoDate(value: string): string {
   return value.replace(/(\.\d{3})\d+/, '$1');
 }
 
-function normalizeRemitente(value: unknown, defaultRemitente: 'AI' | 'USER'): 'AI' | 'USER' {
-  if (typeof value !== 'string') return defaultRemitente;
-  const normalized = value.trim().toUpperCase();
-  if (normalized === 'AI' || normalized === 'ASSISTANT' || normalized === 'BOT') return 'AI';
-  if (normalized === 'USER' || normalized === 'USUARIO') return 'USER';
-  return defaultRemitente;
-}
-
-function extractContenido(raw: RawMensaje, fallbackText: string): string {
-  if (typeof raw.contenido === 'string' && raw.contenido.trim()) return raw.contenido;
-  if (typeof raw.message === 'string' && raw.message.trim()) return raw.message;
-  if (typeof raw.error === 'string' && raw.error.trim()) return raw.error;
-  if (typeof raw.text === 'string' && raw.text.trim()) return raw.text;
-  return fallbackText;
-}
-
-function normalizarMensaje(rawInput: unknown, fallbackText: string, defaultRemitente: 'AI' | 'USER' = 'AI'): Mensaje {
-  if (typeof rawInput === 'string' && rawInput.trim()) {
-    return {
-      id: Date.now(),
-      contenido: rawInput,
-      remitente: defaultRemitente,
-      emocionAsociada: null,
-      fecha: new Date().toISOString(),
-    };
-  }
-
-  const raw = (rawInput && typeof rawInput === 'object' ? rawInput : {}) as RawMensaje;
+function normalizarMensaje(raw: RawMensaje, fallbackText: string): Mensaje {
   const rawDate = raw.fecha;
   const fecha = typeof rawDate === 'string'
     ? sanitizeIsoDate(rawDate)
     : toIsoFromJavaArray(rawDate) || new Date().toISOString();
 
-  const remitente = normalizeRemitente(raw.remitente, defaultRemitente);
+  const remitente = raw.remitente === 'AI' ? 'AI' : 'USER';
   const emocionAsociada =
     raw.emocionAsociada === 'FELIZ' ||
     raw.emocionAsociada === 'TRISTE' ||
@@ -92,7 +63,9 @@ function normalizarMensaje(rawInput: unknown, fallbackText: string, defaultRemit
 
   return {
     id: typeof raw.id === 'number' ? raw.id : Date.now(),
-    contenido: extractContenido(raw, fallbackText),
+    contenido: typeof raw.contenido === 'string' && raw.contenido.trim()
+      ? raw.contenido
+      : fallbackText,
     remitente,
     emocionAsociada,
     fecha,
@@ -137,24 +110,34 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
     setCargando(true)
 
     try {
-      // Registrar emoción en el backend (Observer)
-      if (emocionActual?.tipo) {
-        await emocionService.registrar(
-          usuario.id,
-          emocionActual.tipo,
-          emocionActual.intensidad || 0.5
-        )
+      // 1. Registrar emoción en el backend (Opcional)
+      try {
+        if (emocionActual?.tipo) {
+          await emocionService.registrar(
+            usuario.id,
+            emocionActual.tipo,
+            emocionActual.intensidad || 0.5
+          )
+        }
+      } catch (e) {
+        console.warn('Backend offline - registro emoción omitido');
       }
 
-      // Enviar mensaje + emoción al backend
-      const res = await conversacionService.enviarMensaje(
-        usuario.id,
+      // 2. Generar respuesta de la IA en TypeScript
+      const textoIA = await aiService.generarRespuesta(
         contenido,
         emocionActual?.tipo || 'NEUTRAL'
       )
 
-      // Mostrar respuesta de la IA
-      setMensajes(prev => [...prev, normalizarMensaje(res.data, texts.genericErrorResponse, 'AI')])
+      // 3. Mostrar respuesta
+      const msgIA: Mensaje = {
+        id: Date.now() + 1,
+        contenido: textoIA,
+        remitente: 'AI',
+        emocionAsociada: emocionActual?.tipo || 'NEUTRAL',
+        fecha: new Date().toISOString(),
+      }
+      setMensajes(prev => [...prev, msgIA])
     } catch (_err) {
       setMensajes(prev => [...prev, {
         id: Date.now() + 1,
