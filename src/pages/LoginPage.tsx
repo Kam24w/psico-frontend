@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { authService } from '../services/api'
-import { cfObfuscate, cfObfuscateCompact } from '../services/security'
+import { cfObfuscateCompact } from '../services/security'
 import { useAuth } from '../context/AuthContext'
 import type { LoginRequest } from '../types/domain'
 import { UI_TEXTS } from '../constants/texts'
@@ -43,10 +43,10 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      // Send the standard hex-encoded obfuscated password to the API
+      // The password is only obfuscated for display in the input.
       const res = await authService.login({
         ...form,
-        password: cfObfuscate(form.password)
+        password: form.password
       })
       login(res.data)
       navigate('/chat')

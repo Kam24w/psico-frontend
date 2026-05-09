@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import ChatBubble from './ChatBubble'
 import ChatInput from './ChatInput'
-import { conversacionService, emocionService } from '../../services/api'
+import { emocionService } from '../../services/api'
 import { aiService } from '../../services/aiService'
 import { useAuth } from '../../context/AuthContext'
 import type { EmocionDetectada, Mensaje } from '../../types/domain'
