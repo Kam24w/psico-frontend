@@ -47,7 +47,7 @@ export const conversacionService = {
   obtenerHistorial: (conversacionId: number) =>
     api.get<Mensaje[]>(`/api/conversacion/historial/${conversacionId}`),
   obtenerConversaciones: (usuarioId: number) =>
-    api.get<Mensaje[]>(`/api/conversacion/usuario/${usuarioId}`),
+    api.get<any[]>(`/api/conversacion/usuario/${usuarioId}`),
 }
 
 // ── Emoción ───────────────────────────────────────

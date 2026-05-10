@@ -1,75 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import ChatBubble from './ChatBubble'
 import ChatInput from './ChatInput'
-import { emocionService } from '../../services/api'
-import { aiService } from '../../services/aiService'
+import { conversacionService } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import type { EmocionDetectada, Mensaje } from '../../types/domain'
 import { UI_TEXTS } from '../../constants/texts'
 
 interface ChatWindowProps {
   emocionActual: EmocionDetectada;
-}
-
-type RawMensaje = Partial<Mensaje> & {
-  fecha?: unknown;
-  remitente?: unknown;
-  emocionAsociada?: unknown;
-};
-
-function toIsoFromJavaArray(value: unknown): string | null {
-  if (!Array.isArray(value) || value.length < 5) return null;
-
-  const [year, month, day, hour, minute, second = 0, nano = 0] = value;
-  if (
-    typeof year !== 'number' ||
-    typeof month !== 'number' ||
-    typeof day !== 'number' ||
-    typeof hour !== 'number' ||
-    typeof minute !== 'number' ||
-    typeof second !== 'number' ||
-    typeof nano !== 'number'
-  ) {
-    return null;
-  }
-
-  const millis = Math.floor(nano / 1_000_000);
-  const pad = (num: number, size = 2) => String(num).padStart(size, '0');
-  return `${pad(year, 4)}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:${pad(second)}.${pad(millis, 3)}`;
-}
-
-function sanitizeIsoDate(value: string): string {
-  // Java LocalDateTime puede venir con nanosegundos; JS Date acepta milisegundos.
-  return value.replace(/(\.\d{3})\d+/, '$1');
-}
-
-function normalizarMensaje(raw: RawMensaje, fallbackText: string): Mensaje {
-  const rawDate = raw.fecha;
-  const fecha = typeof rawDate === 'string'
-    ? sanitizeIsoDate(rawDate)
-    : toIsoFromJavaArray(rawDate) || new Date().toISOString();
-
-  const remitente = raw.remitente === 'AI' ? 'AI' : 'USER';
-  const emocionAsociada =
-    raw.emocionAsociada === 'FELIZ' ||
-    raw.emocionAsociada === 'TRISTE' ||
-    raw.emocionAsociada === 'ESTRESADO' ||
-    raw.emocionAsociada === 'ENOJADO' ||
-    raw.emocionAsociada === 'ANSIOSO' ||
-    raw.emocionAsociada === 'SORPRENDIDO' ||
-    raw.emocionAsociada === 'NEUTRAL'
-      ? raw.emocionAsociada
-      : null;
-
-  return {
-    id: typeof raw.id === 'number' ? raw.id : Date.now(),
-    contenido: typeof raw.contenido === 'string' && raw.contenido.trim()
-      ? raw.contenido
-      : fallbackText,
-    remitente,
-    emocionAsociada,
-    fecha,
-  };
 }
 
 export default function ChatWindow({ emocionActual }: ChatWindowProps) {
@@ -95,10 +33,22 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [mensajes])
 
+  const normalizarMensaje = (raw: any): Mensaje => {
+    let fecha = raw.fecha;
+    if (Array.isArray(fecha)) {
+      const [y, m, d, h, min, s = 0] = fecha;
+      fecha = new Date(y, m - 1, d, h, min, s).toISOString();
+    }
+    return {
+      ...raw,
+      fecha: fecha || new Date().toISOString()
+    };
+  }
+
   const enviarMensaje = async (contenido: string) => {
     if (!usuario?.id) return
 
-    // Mostrar mensaje del usuario inmediatamente
+    // 1. Mostrar mensaje del usuario inmediatamente en la UI
     const msgUsuario: Mensaje = {
       id: Date.now(),
       contenido,
@@ -110,35 +60,20 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
     setCargando(true)
 
     try {
-      // 1. Registrar emoción en el backend (Opcional)
-      try {
-        if (emocionActual?.tipo) {
-          await emocionService.registrar(
-            usuario.id,
-            emocionActual.tipo,
-            emocionActual.intensidad || 0.5
-          )
-        }
-      } catch (e) {
-        console.warn('Backend offline - registro emoción omitido');
-      }
-
-      // 2. Generar respuesta de la IA en TypeScript
-      const textoIA = await aiService.generarRespuesta(
+      // 2. Llamar al backend para procesar el mensaje y obtener respuesta de la IA
+      const response = await conversacionService.enviarMensaje(
+        usuario.id,
         contenido,
         emocionActual?.tipo || 'NEUTRAL'
       )
-
-      // 3. Mostrar respuesta
-      const msgIA: Mensaje = {
-        id: Date.now() + 1,
-        contenido: textoIA,
-        remitente: 'AI',
-        emocionAsociada: emocionActual?.tipo || 'NEUTRAL',
-        fecha: new Date().toISOString(),
-      }
+      
+      const msgIA = normalizarMensaje(response.data)
+      
+      // 3. Añadir la respuesta de la IA al chat
       setMensajes(prev => [...prev, msgIA])
-    } catch (_err) {
+
+    } catch (error) {
+      console.error('Error al enviar mensaje:', error)
       setMensajes(prev => [...prev, {
         id: Date.now() + 1,
         contenido: texts.genericErrorResponse,
