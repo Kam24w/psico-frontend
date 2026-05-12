@@ -19,6 +19,11 @@ export default function ChatPage() {
 
   return (
     <div className="chat-page">
+      {/* Blobs decorativos globales */}
+      <div className="global-blob-1" />
+      <div className="global-blob-2" />
+      <div className="global-blob-3" />
+
       {/* Navbar */}
       <header className="chat-navbar">
         <div className="chat-nav-brand">🧠 {texts.navbarTitle}</div>

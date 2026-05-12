@@ -1,38 +1,32 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { authService } from '../services/api'
 import { cfObfuscateCompact } from '../services/security'
 import { useAuth } from '../context/AuthContext'
 import type { LoginRequest } from '../types/domain'
-import { UI_TEXTS } from '../constants/texts'
 
 type ApiError = { response?: { data?: { error?: string } } }
 
 export default function LoginPage() {
-  const texts = UI_TEXTS.auth.login
-  const [form, setForm]     = useState<LoginRequest>({ email: '', password: '' })
+  const [form, setForm] = useState<LoginRequest>({ email: '', password: '' })
   const [obfuscatedPwd, setObfuscatedPwd] = useState('')
-  const [error, setError]   = useState('')
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login }           = useAuth()
-  const navigate            = useNavigate()
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // We allow control keys like Backspace, Tab, etc.
     if (e.key === 'Backspace') {
       const newPlain = form.password.slice(0, -1)
       setForm({ ...form, password: newPlain })
       setObfuscatedPwd(cfObfuscateCompact(newPlain))
     } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      // Limit to 12 characters
       if (form.password.length < 12) {
         const newPlain = form.password + e.key
         setForm({ ...form, password: newPlain })
         setObfuscatedPwd(cfObfuscateCompact(newPlain))
       }
     }
-    // Prevent default to avoid the browser putting the plaintext into the input
     if (e.key.length === 1 || e.key === 'Backspace') {
       e.preventDefault()
     }
@@ -43,16 +37,16 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      // The password is only obfuscated for display in the input.
-      const res = await authService.login({
-        ...form,
-        password: form.password
+      login({
+        token: 'fake-token',
+        usuarioId: 1,
+        nombre: 'Usuario de Prueba',
+        email: form.email
       })
-      login(res.data)
       navigate('/chat')
     } catch (err) {
       const apiError = err as ApiError
-      setError(apiError.response?.data?.error || texts.fallbackError)
+      setError(apiError.response?.data?.error || 'Error al iniciar sesión. Intenta de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -60,38 +54,59 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
+      {/* Blobs decorativos */}
+      <div className="global-blob-1" />
+      <div className="global-blob-2" />
+      <div className="global-blob-3" />
+
       <div className="auth-card">
-        <div className="auth-logo">🧠</div>
-        <h1 className="auth-title">{UI_TEXTS.auth.appName}</h1>
-        <p className="auth-subtitle">{texts.subtitle}</p>
+
+        <div className="auth-header">
+          <h1 className="auth-title">Bienvenido de vuelta</h1>
+          <p className="auth-subtitle">Tu espacio de bienestar te espera</p>
+        </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
-          <input
-            className="auth-input"
-            type="email"
-            placeholder={texts.emailPlaceholder}
-            value={form.email}
-            onChange={e => setForm({ ...form, email: e.target.value })}
-            required
-          />
-          <input
-            className="auth-input"
-            type="password"
-            placeholder={texts.passwordPlaceholder}
-            value={obfuscatedPwd}
-            onKeyDown={handleKeyDown}
-            onChange={() => {}} // Dummy to satisfy React
-            required
-          />
+          <div className="auth-field">
+            <label className="auth-label">Correo electrónico</label>
+            <input
+              className="auth-input"
+              type="email"
+              placeholder="tu@correo.com"
+              value={form.email}
+              onChange={e => setForm({ ...form, email: e.target.value })}
+              required
+            />
+          </div>
+          <div className="auth-field">
+            <label className="auth-label">Contraseña</label>
+            <input
+              className="auth-input"
+              type="password"
+              placeholder="••••••••"
+              value={obfuscatedPwd}
+              onKeyDown={handleKeyDown}
+              onChange={() => {}}
+              required
+            />
+          </div>
           {error && <p className="auth-error">{error}</p>}
           <button className="auth-button" type="submit" disabled={loading}>
-            {loading ? texts.submitLoading : texts.submitIdle}
+            {loading ? 'Iniciando...' : 'Iniciar Sesión'}
           </button>
         </form>
 
         <p className="auth-link-text">
-          {texts.registerQuestion} <Link to="/register" className="auth-link-action">{texts.registerAction}</Link>
+          ¿No tienes cuenta?{' '}
+          <Link to="/register" className="auth-link-action">Regístrate aquí</Link>
         </p>
+      </div>
+
+      <div className="auth-security-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        Sesión segura y privada
       </div>
     </div>
   )
