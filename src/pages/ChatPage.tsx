@@ -28,6 +28,13 @@ export default function ChatPage() {
       <header className="chat-navbar">
         <div className="chat-nav-brand">🧠 {texts.navbarTitle}</div>
         <div className="chat-nav-right">
+          <button 
+            className="chat-call-btn" 
+            onClick={() => navigate('/call')}
+            style={{ padding: '8px 18px', borderRadius: '20px', background: 'rgba(45, 212, 191, 0.2)', border: '1px solid rgba(45, 212, 191, 0.4)', color: '#2dd4bf', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease' }}
+          >
+            📞 Iniciar Llamada
+          </button>
           <span className="chat-nav-user">👤 {texts.userPrefix}: {usuario?.nombre}</span>
           <button className="chat-logout-btn" onClick={handleLogout}>{texts.logout}</button>
         </div>
