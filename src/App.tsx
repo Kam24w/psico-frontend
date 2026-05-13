@@ -19,7 +19,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/"         element={<Navigate to="/chat" replace />} />
+          <Route path="/"         element={<Navigate to="/call" replace />} />
           <Route path="/login"    element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/chat"     element={

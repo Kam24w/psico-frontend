@@ -4,10 +4,8 @@ import CameraPanel from '../components/Camera/CameraPanel'
 import ChatWindow from '../components/Chat/ChatWindow'
 import { useAuth } from '../context/AuthContext'
 import type { EmocionDetectada } from '../types/domain'
-import { UI_TEXTS } from '../constants/texts'
 
 export default function ChatPage() {
-  const texts = UI_TEXTS.chatPage
   const [emocionActual, setEmocionActual] = useState<EmocionDetectada>({ tipo: 'NEUTRAL', intensidad: 0 })
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
@@ -18,45 +16,62 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="chat-page">
-      {/* Blobs decorativos globales */}
-      <div className="global-blob-1" />
-      <div className="global-blob-2" />
-      <div className="global-blob-3" />
-
-      {/* Navbar */}
-      <header className="chat-navbar">
-        <div className="chat-nav-brand">🧠 {texts.navbarTitle}</div>
-        <div className="chat-nav-right">
-          <button 
-            className="chat-call-btn" 
-            onClick={() => navigate('/call')}
-            style={{ padding: '8px 18px', borderRadius: '20px', background: 'rgba(45, 212, 191, 0.2)', border: '1px solid rgba(45, 212, 191, 0.4)', color: '#2dd4bf', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease' }}
-          >
-            📞 Iniciar Llamada
-          </button>
-          <span className="chat-nav-user">👤 {texts.userPrefix}: {usuario?.nombre}</span>
-          <button className="chat-logout-btn" onClick={handleLogout}>{texts.logout}</button>
+    <div className="chat-layout-wrapper">
+      {/* Sidebar Oscuro */}
+      <aside className="chat-sidebar-dark">
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-icon">🧠</div>
+          <div className="sidebar-brand-text">
+            <h1>Psicólogo Virtual</h1>
+            <p>APOYO EMOCIONAL 24/7</p>
+          </div>
         </div>
-      </header>
 
-      {/* Main layout */}
-      <main className="chat-main-layout">
-        {/* Panel izquierdo: cámara + emoción */}
-        <aside className="chat-sidebar">
-          <CameraPanel onEmocionCambia={setEmocionActual} />
-          <div className="chat-tip-card">
-            <p className="chat-tip-text">
-              💡 <strong>{texts.tipTitle}</strong><br />
-              {texts.tipDescription}
+        <div className="sidebar-scroll-area">
+          <div className="sidebar-camera-section">
+            <CameraPanel onEmocionCambia={setEmocionActual} />
+          </div>
+
+          <div className="sidebar-therapist-info">
+            <h2>Psicólogo Virtual</h2>
+            <p>IA de Apoyo Psicológico 24/7</p>
+          </div>
+
+          <div className="sidebar-emotion-section">
+            <h3 className="sidebar-section-title">EMOCIÓN DETECTADA</h3>
+            <div className="emotion-display-card">
+              <div className="emotion-display-icon">
+                {emocionActual.tipo === 'NEUTRAL' ? '😐' : 
+                 emocionActual.tipo === 'FELIZ' ? '😊' :
+                 emocionActual.tipo === 'TRISTE' ? '😢' : '🧠'}
+              </div>
+              <div className="emotion-display-text">
+                <span className="emotion-name">{emocionActual.tipo === 'NEUTRAL' ? 'Neutral' : emocionActual.tipo}</span>
+                <span className="emotion-sub">Ligeramente {emocionActual.tipo.toLowerCase()}</span>
+              </div>
+            </div>
+            <p className="emotion-help-text">
+              Tu cámara analiza tu estado emocional en tiempo real para personalizar mis respuestas.
             </p>
           </div>
-        </aside>
 
-        {/* Panel derecho: chat */}
-        <section className="chat-section">
-          <ChatWindow emocionActual={emocionActual} />
-        </section>
+          <div className="sidebar-tip-section">
+            <h3 className="sidebar-section-title">¿CÓMO FUNCIONA?</h3>
+            <div className="sidebar-tip-card">
+              <span className="tip-icon">👁️</span> Detección facial
+            </div>
+          </div>
+        </div>
+
+        <div className="sidebar-footer">
+           <button className="sidebar-action-btn" onClick={() => navigate('/call')}>📞 Llamada</button>
+           <button className="sidebar-action-btn sidebar-logout-btn" onClick={handleLogout}>Salir ({usuario?.nombre})</button>
+        </div>
+      </aside>
+
+      {/* Main Chat Area Blanco */}
+      <main className="chat-main-light">
+        <ChatWindow emocionActual={emocionActual} />
       </main>
     </div>
   )

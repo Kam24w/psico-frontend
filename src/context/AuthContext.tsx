@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    const tokenGuardado  = localStorage.getItem('psico_token')
+    const tokenGuardado   = localStorage.getItem('psico_token')
     const usuarioGuardado = localStorage.getItem('psico_usuario')
     if (tokenGuardado && usuarioGuardado) {
       setToken(tokenGuardado)
@@ -28,12 +28,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = (data: AuthPayload) => {
+    // El backend devuelve userId/name; mantenemos el modelo interno con id/nombre
+    const id     = data.userId ?? data.usuarioId ?? 0
+    const nombre = data.name ?? data.nombre ?? ''
+    const usuarioLocal: Usuario = { id, nombre, email: data.email }
+
     setToken(data.token)
-    setUsuario({ id: data.usuarioId, nombre: data.nombre, email: data.email })
+    setUsuario(usuarioLocal)
     localStorage.setItem('psico_token', data.token)
-    localStorage.setItem('psico_usuario', JSON.stringify({
-      id: data.usuarioId, nombre: data.nombre, email: data.email
-    }))
+    localStorage.setItem('psico_usuario', JSON.stringify(usuarioLocal))
   }
 
   const logout = () => {
