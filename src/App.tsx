@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import LoginPage    from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ChatPage     from './pages/ChatPage'
+import CallPage     from './pages/CallPage'
 import { UI_TEXTS } from './constants/texts'
 
 // Ruta protegida: redirige al login si no hay sesión
@@ -24,6 +25,11 @@ export default function App() {
           <Route path="/chat"     element={
             <RutaProtegida>
               <ChatPage />
+            </RutaProtegida>
+          } />
+          <Route path="/call"     element={
+            <RutaProtegida>
+              <CallPage />
             </RutaProtegida>
           } />
         </Routes>
