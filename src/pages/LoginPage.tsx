@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { authService } from '../services/api'
 import { cfObfuscateCompact } from '../services/security'
 import { useAuth } from '../context/AuthContext'
 import type { LoginRequest } from '../types/domain'
 
-type ApiError = { response?: { data?: { error?: string } } }
+type ApiError = { response?: { data?: { message?: string; error?: string } } }
 
 export default function LoginPage() {
   const [form, setForm] = useState<LoginRequest>({ email: '', password: '' })
@@ -37,16 +38,16 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      login({
-        token: 'fake-token',
-        usuarioId: 1,
-        nombre: 'Usuario de Prueba',
-        email: form.email
-      })
-      navigate('/chat')
+      const res = await authService.login(form)
+      login(res.data)
+      navigate('/call')
     } catch (err) {
       const apiError = err as ApiError
-      setError(apiError.response?.data?.error || 'Error al iniciar sesión. Intenta de nuevo.')
+      setError(
+        apiError.response?.data?.message ||
+        apiError.response?.data?.error ||
+        'Credenciales incorrectas. Intenta de nuevo.'
+      )
     } finally {
       setLoading(false)
     }

@@ -6,11 +6,11 @@ import { cfObfuscateCompact } from '../services/security'
 import { useAuth } from '../context/AuthContext'
 import type { RegisterRequest } from '../types/domain'
 
-type ApiError = { response?: { data?: { error?: string } } }
+type ApiError = { response?: { data?: { message?: string; error?: string } } }
 
 export default function RegisterPage() {
   const [form, setForm] = useState<RegisterRequest & { confirmPassword?: string }>({
-    nombre: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -55,15 +55,19 @@ export default function RegisterPage() {
     setError('')
     try {
       const res = await authService.register({
-        nombre: form.nombre,
-        email: form.email,
-        password: form.password
+        name:     form.name,
+        email:    form.email,
+        password: form.password,
       })
       login(res.data)
-      navigate('/chat')
+      navigate('/call')
     } catch (err) {
       const apiError = err as ApiError
-      setError(apiError.response?.data?.error || 'Error al crear la cuenta.')
+      setError(
+        apiError.response?.data?.message ||
+        apiError.response?.data?.error ||
+        'Error al crear la cuenta.'
+      )
     } finally {
       setLoading(false)
     }
@@ -88,7 +92,7 @@ export default function RegisterPage() {
             <label className="auth-label">Nombre completo</label>
             <input
               className="auth-input" type="text" placeholder="Tu nombre"
-              value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} required
+            value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
             />
           </div>
           <div className="auth-field">
