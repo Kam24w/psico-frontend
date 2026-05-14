@@ -10,28 +10,10 @@ type ApiError = { response?: { data?: { message?: string; error?: string } } }
 
 export default function LoginPage() {
   const [form, setForm] = useState<LoginRequest>({ email: '', password: '' })
-  const [obfuscatedPwd, setObfuscatedPwd] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
-      const newPlain = form.password.slice(0, -1)
-      setForm({ ...form, password: newPlain })
-      setObfuscatedPwd(cfObfuscateCompact(newPlain))
-    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      if (form.password.length < 12) {
-        const newPlain = form.password + e.key
-        setForm({ ...form, password: newPlain })
-        setObfuscatedPwd(cfObfuscateCompact(newPlain))
-      }
-    }
-    if (e.key.length === 1 || e.key === 'Backspace') {
-      e.preventDefault()
-    }
-  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -85,9 +67,8 @@ export default function LoginPage() {
               className="auth-input"
               type="password"
               placeholder="••••••••"
-              value={obfuscatedPwd}
-              onKeyDown={handleKeyDown}
-              onChange={() => {}}
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
               required
             />
           </div>

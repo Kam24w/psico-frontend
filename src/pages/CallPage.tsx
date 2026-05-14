@@ -13,12 +13,21 @@ export default function CallPage() {
 
   // Start camera on mount
   useEffect(() => {
+    let isMounted = true;
+    let currentStream: MediaStream | null = null;
+    
     async function startCamera() {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        setStream(mediaStream)
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        if (!isMounted) {
+          // Si el componente se desmontó, detener la cámara de inmediato
+          stream.getTracks().forEach(track => track.stop())
+          return
+        }
+        currentStream = stream
+        setStream(stream)
         if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream
+          videoRef.current.srcObject = stream
         }
       } catch (err) {
         console.error("Error accessing media devices.", err)
@@ -27,8 +36,12 @@ export default function CallPage() {
     startCamera()
     
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop())
+      isMounted = false;
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop())
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null
       }
     }
   }, [])
