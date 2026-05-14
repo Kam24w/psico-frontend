@@ -6,42 +6,20 @@ import { cfObfuscateCompact } from '../services/security'
 import { useAuth } from '../context/AuthContext'
 import type { RegisterRequest } from '../types/domain'
 
-type ApiError = { response?: { data?: { error?: string } } }
+type ApiError = { response?: { data?: { message?: string; error?: string } } }
 
 export default function RegisterPage() {
   const [form, setForm] = useState<RegisterRequest & { confirmPassword?: string }>({
-    nombre: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: ''
   })
 
-  const [obfuscatedPwd, setObfuscatedPwd] = useState('')
-  const [obfuscatedConfirmPwd, setObfuscatedConfirmPwd] = useState('')
   const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
   const { login }             = useAuth()
   const navigate              = useNavigate()
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, field: 'password' | 'confirmPassword') => {
-    const isConfirm = field === 'confirmPassword'
-    const currentPlain = isConfirm ? form.confirmPassword! : form.password
-
-    if (e.key === 'Backspace') {
-      const newPlain = currentPlain.slice(0, -1)
-      setForm({ ...form, [field]: newPlain })
-      isConfirm ? setObfuscatedConfirmPwd(cfObfuscateCompact(newPlain)) : setObfuscatedPwd(cfObfuscateCompact(newPlain))
-    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      if (currentPlain.length < 12) {
-        const newPlain = currentPlain + e.key
-        setForm({ ...form, [field]: newPlain })
-        isConfirm ? setObfuscatedConfirmPwd(cfObfuscateCompact(newPlain)) : setObfuscatedPwd(cfObfuscateCompact(newPlain))
-      }
-    }
-    if (e.key.length === 1 || e.key === 'Backspace') {
-      e.preventDefault()
-    }
-  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -55,15 +33,19 @@ export default function RegisterPage() {
     setError('')
     try {
       const res = await authService.register({
-        nombre: form.nombre,
-        email: form.email,
-        password: form.password
+        name:     form.name,
+        email:    form.email,
+        password: form.password,
       })
       login(res.data)
-      navigate('/chat')
+      navigate('/call')
     } catch (err) {
       const apiError = err as ApiError
-      setError(apiError.response?.data?.error || 'Error al crear la cuenta.')
+      setError(
+        apiError.response?.data?.message ||
+        apiError.response?.data?.error ||
+        'Error al crear la cuenta.'
+      )
     } finally {
       setLoading(false)
     }
@@ -88,7 +70,7 @@ export default function RegisterPage() {
             <label className="auth-label">Nombre completo</label>
             <input
               className="auth-input" type="text" placeholder="Tu nombre"
-              value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} required
+            value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
             />
           </div>
           <div className="auth-field">
@@ -102,9 +84,8 @@ export default function RegisterPage() {
             <label className="auth-label">Contraseña</label>
             <input
               className="auth-input" type="password" placeholder="••••••••"
-              value={obfuscatedPwd}
-              onKeyDown={(e) => handleKeyDown(e, 'password')}
-              onChange={() => {}}
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
               required
             />
           </div>
@@ -112,9 +93,8 @@ export default function RegisterPage() {
             <label className="auth-label">Confirmar contraseña</label>
             <input
               className="auth-input" type="password" placeholder="••••••••"
-              value={obfuscatedConfirmPwd}
-              onKeyDown={(e) => handleKeyDown(e, 'confirmPassword')}
-              onChange={() => {}}
+              value={form.confirmPassword}
+              onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
               required
             />
           </div>

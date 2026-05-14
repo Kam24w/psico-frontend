@@ -33,16 +33,47 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
   const [emocionActual, setEmocionActual]     = useState<EmocionDetectada>({ tipo: 'NEUTRAL', intensidad: 0, raw: 'neutral' })
   const [errorCamara, setErrorCamara]         = useState<string | null>(null)
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   // Cargar modelos de face-api.js
   useEffect(() => {
     const cargarModelos = async () => {
       try {
+        // Asegurar que el backend de TensorFlow esté listo
+        console.log("Initializing face-api and TF...");
+        try {
+          const tf = (faceapi as any).tf;
+          if (tf) {
+            // Desactivar WebGL agresivamente para evitar el error de 'backend'
+            if (tf.ENV && tf.ENV.set) {
+              tf.ENV.set('WEBGL_VERSION', 0);
+            }
+            if (typeof tf.setBackend === 'function') {
+              await tf.setBackend('cpu');
+              console.log("Aggressively forced TF backend to: cpu");
+            }
+          }
+        } catch (tfError) {
+          console.warn("Could not disable WebGL or force CPU:", tfError);
+        }
+        
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL),
           faceapi.nets.faceExpressionNet.loadFromUri(MODELS_URL),
-        ])
-        setModelosCargados(true)
+        ]);
+        
+        console.log("Face-api models loaded successfully");
+        if (isMountedRef.current) {
+          setModelosCargados(true);
+        }
       } catch (e) {
         const error = e as Error
         console.warn('No se pudieron cargar los modelos de face-api:', error.message)
@@ -52,30 +83,50 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
     cargarModelos()
   }, [])
 
-  // Iniciar detección continua
+  // Iniciar detección continua de forma segura (recursiva con setTimeout)
   const iniciarDeteccion = useCallback(() => {
     if (!modelosCargados || !videoRef.current) return
 
-    intervaloRef.current = setInterval(async () => {
-      if (!videoRef.current || videoRef.current.readyState < 2) return
+    const detectar = async () => {
+      if (!isMountedRef.current || !videoRef.current || videoRef.current.readyState < 2) {
+         if (isMountedRef.current) intervaloRef.current = setTimeout(detectar, 2000)
+         return
+      }
+
       try {
+        // No detectar si la IA está hablando para no saturar el CPU
+        if (window.speechSynthesis.speaking) {
+           if (isMountedRef.current) intervaloRef.current = setTimeout(detectar, 5000)
+           return
+        }
+
         const deteccion = await faceapi
           .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions())
           .withFaceExpressions()
 
-        if (deteccion?.expressions) {
+        if (deteccion?.expressions && isMountedRef.current) {
           const emocion = mapearEmocion(deteccion.expressions)
           setEmocionActual(emocion)
         }
-      } catch (_error) {
-        // silencioso - no interrumpe el chat
+      } catch (err: any) {
+        // Ignorar silenciosamente el error de TF backend/WebGL
+        // face-api.js tiene su propio TF bundleado que no podemos controlar externamente
+        if (err?.message && !err.message.includes('backend') && !err.message.includes('undefined')) {
+          console.warn("Detection error:", err.message)
+        }
       }
-    }, 2000) // detecta cada 2 segundos
+
+      if (isMountedRef.current) {
+        intervaloRef.current = setTimeout(detectar, 5000)
+      }
+    }
+
+    detectar()
   }, [modelosCargados, videoRef])
 
   const detenerDeteccion = useCallback(() => {
     if (intervaloRef.current) {
-      clearInterval(intervaloRef.current)
+      clearTimeout(intervaloRef.current)
       intervaloRef.current = null
     }
   }, [])
@@ -83,21 +134,37 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
   // Iniciar cámara
   const iniciarCamara = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      if (!isMountedRef.current) {
+        stream.getTracks().forEach(track => track.stop())
+        return
+      }
+      streamRef.current = stream
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         await videoRef.current.play()
         iniciarDeteccion()
       }
     } catch (_error) {
-      setErrorCamara(UI_TEXTS.camera.hookCameraError)
+      if (isMountedRef.current) {
+        setErrorCamara(UI_TEXTS.camera.hookCameraError)
+      }
     }
   }, [videoRef, iniciarDeteccion])
 
   useEffect(() => {
     if (modelosCargados) iniciarCamara()
-    return () => detenerDeteccion()
-  }, [modelosCargados, iniciarCamara, detenerDeteccion])
+    return () => {
+      detenerDeteccion()
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
+        streamRef.current = null
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null
+      }
+    }
+  }, [modelosCargados, iniciarCamara, detenerDeteccion, videoRef])
 
   return { emocionActual, modelosCargados, errorCamara, iniciarCamara }
 }

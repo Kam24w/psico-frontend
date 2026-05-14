@@ -1,52 +1,35 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { authService } from '../services/api'
 import { cfObfuscateCompact } from '../services/security'
 import { useAuth } from '../context/AuthContext'
 import type { LoginRequest } from '../types/domain'
 
-type ApiError = { response?: { data?: { error?: string } } }
+type ApiError = { response?: { data?: { message?: string; error?: string } } }
 
 export default function LoginPage() {
   const [form, setForm] = useState<LoginRequest>({ email: '', password: '' })
-  const [obfuscatedPwd, setObfuscatedPwd] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
-      const newPlain = form.password.slice(0, -1)
-      setForm({ ...form, password: newPlain })
-      setObfuscatedPwd(cfObfuscateCompact(newPlain))
-    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      if (form.password.length < 12) {
-        const newPlain = form.password + e.key
-        setForm({ ...form, password: newPlain })
-        setObfuscatedPwd(cfObfuscateCompact(newPlain))
-      }
-    }
-    if (e.key.length === 1 || e.key === 'Backspace') {
-      e.preventDefault()
-    }
-  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setError('')
     try {
-      login({
-        token: 'fake-token',
-        usuarioId: 1,
-        nombre: 'Usuario de Prueba',
-        email: form.email
-      })
-      navigate('/chat')
+      const res = await authService.login(form)
+      login(res.data)
+      navigate('/call')
     } catch (err) {
       const apiError = err as ApiError
-      setError(apiError.response?.data?.error || 'Error al iniciar sesión. Intenta de nuevo.')
+      setError(
+        apiError.response?.data?.message ||
+        apiError.response?.data?.error ||
+        'Credenciales incorrectas. Intenta de nuevo.'
+      )
     } finally {
       setLoading(false)
     }
@@ -84,9 +67,8 @@ export default function LoginPage() {
               className="auth-input"
               type="password"
               placeholder="••••••••"
-              value={obfuscatedPwd}
-              onKeyDown={handleKeyDown}
-              onChange={() => {}}
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
               required
             />
           </div>

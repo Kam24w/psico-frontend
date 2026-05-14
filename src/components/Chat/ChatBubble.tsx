@@ -1,10 +1,6 @@
 // Burbuja de mensaje individual del chat
+import { useEffect, useRef } from 'react'
 import type { Mensaje, TipoEmocion } from '../../types/domain'
-
-const EMOJIS_EMOCION: Record<TipoEmocion, string> = {
-  FELIZ: '😊', TRISTE: '😢', ESTRESADO: '😰',
-  ENOJADO: '😠', ANSIOSO: '😟', SORPRENDIDO: '😲', NEUTRAL: '😐',
-}
 
 function formatearHora(fecha: string): string {
   const date = new Date(fecha)
@@ -13,20 +9,47 @@ function formatearHora(fecha: string): string {
 }
 
 export default function ChatBubble({ mensaje }: { mensaje: Mensaje }) {
-  const esIA     = mensaje.remitente === 'AI'
-  const hora     = formatearHora(mensaje.fecha)
-  const emojiEmo = mensaje.emocionAsociada ? EMOJIS_EMOCION[mensaje.emocionAsociada] : null
+  const esIA     = mensaje.sender === 'AI'
+  const hora     = formatearHora(mensaje.createdAt)
+  const bubbleRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = bubbleRef.current
+    if (!el) return
+    el.style.opacity = '0'
+    el.style.transform = 'translateY(10px)'
+    requestAnimationFrame(() => {
+      el.style.transition = 'opacity 0.3s ease, transform 0.3s ease'
+      el.style.opacity = '1'
+      el.style.transform = 'translateY(0)'
+    })
+  }, [])
 
   return (
-    <div className={`chat-bubble-row ${esIA ? 'chat-bubble-row-ai' : 'chat-bubble-row-user'}`}>
-      {esIA && <div className="chat-bubble-avatar">🧠</div>}
-      <div className={`chat-bubble ${esIA ? 'chat-bubble-ai' : 'chat-bubble-user'}`}>
-        <p className="chat-bubble-text">{mensaje.contenido}</p>
-        <div className="chat-bubble-meta">
-          {emojiEmo && !esIA && <span className="chat-bubble-emoji-meta">{emojiEmo}</span>}
-          <span className="chat-bubble-time">{hora}</span>
+    <div
+      ref={bubbleRef}
+      className={`light-bubble-row ${esIA ? 'light-bubble-row-ai' : 'light-bubble-row-user'}`}
+    >
+      {esIA && (
+        <div className="light-avatar light-avatar-ai" aria-label="Psicólogo">
+          IA
+        </div>
+      )}
+
+      <div className={`light-bubble-content-wrapper ${esIA ? 'wrapper-ai' : 'wrapper-user'}`}>
+        <div className={`light-bubble ${esIA ? 'light-bubble-ai' : 'light-bubble-user'}`}>
+          <p className="light-bubble-text">{mensaje.content}</p>
+        </div>
+        <div className={`light-bubble-time ${esIA ? 'time-left' : 'time-right'}`}>
+          {hora}
         </div>
       </div>
+
+      {!esIA && (
+        <div className="light-avatar light-avatar-user" aria-label="Usuario">
+          TÚ
+        </div>
+      )}
     </div>
   )
 }
