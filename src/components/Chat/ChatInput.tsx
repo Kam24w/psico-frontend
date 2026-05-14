@@ -47,6 +47,14 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
 
       recognitionRef.current = recognition
     }
+    
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort()
+        } catch(e) {}
+      }
+    }
   }, [])
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {

@@ -33,6 +33,15 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
   const [emocionActual, setEmocionActual]     = useState<EmocionDetectada>({ tipo: 'NEUTRAL', intensidad: 0, raw: 'neutral' })
   const [errorCamara, setErrorCamara]         = useState<string | null>(null)
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   // Cargar modelos de face-api.js
   useEffect(() => {
@@ -42,7 +51,9 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
           faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL),
           faceapi.nets.faceExpressionNet.loadFromUri(MODELS_URL),
         ])
-        setModelosCargados(true)
+        if (isMountedRef.current) {
+          setModelosCargados(true)
+        }
       } catch (e) {
         const error = e as Error
         console.warn('No se pudieron cargar los modelos de face-api:', error.message)
@@ -63,7 +74,7 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
           .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions())
           .withFaceExpressions()
 
-        if (deteccion?.expressions) {
+        if (deteccion?.expressions && isMountedRef.current) {
           const emocion = mapearEmocion(deteccion.expressions)
           setEmocionActual(emocion)
         }
@@ -84,20 +95,36 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
   const iniciarCamara = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      if (!isMountedRef.current) {
+        stream.getTracks().forEach(track => track.stop())
+        return
+      }
+      streamRef.current = stream
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         await videoRef.current.play()
         iniciarDeteccion()
       }
     } catch (_error) {
-      setErrorCamara(UI_TEXTS.camera.hookCameraError)
+      if (isMountedRef.current) {
+        setErrorCamara(UI_TEXTS.camera.hookCameraError)
+      }
     }
   }, [videoRef, iniciarDeteccion])
 
   useEffect(() => {
     if (modelosCargados) iniciarCamara()
-    return () => detenerDeteccion()
-  }, [modelosCargados, iniciarCamara, detenerDeteccion])
+    return () => {
+      detenerDeteccion()
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
+        streamRef.current = null
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null
+      }
+    }
+  }, [modelosCargados, iniciarCamara, detenerDeteccion, videoRef])
 
   return { emocionActual, modelosCargados, errorCamara, iniciarCamara }
 }

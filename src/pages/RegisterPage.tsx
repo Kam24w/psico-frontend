@@ -16,32 +16,10 @@ export default function RegisterPage() {
     confirmPassword: ''
   })
 
-  const [obfuscatedPwd, setObfuscatedPwd] = useState('')
-  const [obfuscatedConfirmPwd, setObfuscatedConfirmPwd] = useState('')
   const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
   const { login }             = useAuth()
   const navigate              = useNavigate()
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, field: 'password' | 'confirmPassword') => {
-    const isConfirm = field === 'confirmPassword'
-    const currentPlain = isConfirm ? form.confirmPassword! : form.password
-
-    if (e.key === 'Backspace') {
-      const newPlain = currentPlain.slice(0, -1)
-      setForm({ ...form, [field]: newPlain })
-      isConfirm ? setObfuscatedConfirmPwd(cfObfuscateCompact(newPlain)) : setObfuscatedPwd(cfObfuscateCompact(newPlain))
-    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      if (currentPlain.length < 12) {
-        const newPlain = currentPlain + e.key
-        setForm({ ...form, [field]: newPlain })
-        isConfirm ? setObfuscatedConfirmPwd(cfObfuscateCompact(newPlain)) : setObfuscatedPwd(cfObfuscateCompact(newPlain))
-      }
-    }
-    if (e.key.length === 1 || e.key === 'Backspace') {
-      e.preventDefault()
-    }
-  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -106,9 +84,8 @@ export default function RegisterPage() {
             <label className="auth-label">Contraseña</label>
             <input
               className="auth-input" type="password" placeholder="••••••••"
-              value={obfuscatedPwd}
-              onKeyDown={(e) => handleKeyDown(e, 'password')}
-              onChange={() => {}}
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
               required
             />
           </div>
@@ -116,9 +93,8 @@ export default function RegisterPage() {
             <label className="auth-label">Confirmar contraseña</label>
             <input
               className="auth-input" type="password" placeholder="••••••••"
-              value={obfuscatedConfirmPwd}
-              onKeyDown={(e) => handleKeyDown(e, 'confirmPassword')}
-              onChange={() => {}}
+              value={form.confirmPassword}
+              onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
               required
             />
           </div>
