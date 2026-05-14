@@ -73,9 +73,17 @@ export const conversacionService = {
   obtenerHistorial: (conversacionId: number) =>
     api.get<Mensaje[]>(`/api/conversations/history/${conversacionId}`),
 
+  /** Historial de la sesión activa para el usuario actual (usando JWT) */
+  obtenerHistorialActivo: () =>
+    api.get<Mensaje[]>('/api/conversations/active-history'),
+
   /** Lista de conversaciones de un usuario */
   obtenerConversaciones: (usuarioId: number) =>
     api.get<Conversacion[]>(`/api/conversations/user/${usuarioId}`),
+
+  /** Inicia una sesión de voz con un saludo de la IA */
+  iniciarConversacion: (emocion: TipoEmocion) =>
+    api.post<Mensaje>('/api/conversations/initiate', { emotion }),
 }
 
 // ── Emoción ───────────────────────────────────────────────────────────────────

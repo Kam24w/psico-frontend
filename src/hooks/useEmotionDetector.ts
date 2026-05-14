@@ -94,7 +94,7 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
   // Iniciar cámara
   const iniciarCamara = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       if (!isMountedRef.current) {
         stream.getTracks().forEach(track => track.stop())
         return
