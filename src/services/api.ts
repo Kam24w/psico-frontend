@@ -83,7 +83,7 @@ export const conversacionService = {
 
   /** Inicia una sesión de voz con un saludo de la IA */
   iniciarConversacion: (emocion: TipoEmocion) =>
-    api.post<Mensaje>('/api/conversations/initiate', { emotion }),
+    api.post<Mensaje>('/api/conversations/initiate', { emotion: emocion }),
 }
 
 // ── Emoción ───────────────────────────────────────────────────────────────────

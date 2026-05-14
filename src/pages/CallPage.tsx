@@ -17,16 +17,25 @@ export default function CallPage() {
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [aiStatus, setAiStatus] = useState<'esperando' | 'pensando' | 'hablando'>('esperando')
   const [lastAiMessage, setLastAiMessage] = useState('')
+  const [sessionStarted, setSessionStarted] = useState(false) // Nuevo estado para gesto inicial
   
   const recognitionRef = useRef<any>(null)
   const hasInitiatedRef = useRef(false)
   const emotionTimeoutRef = useRef<any>(null)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => { isMountedRef.current = false }
+  }, [])
 
   // --- TTS (Text to Speech) ---
   const speak = useCallback((text: string) => {
-    if (!text) return
+    console.log("🔊 AI ATTEMPTING TO SPEAK:", text)
+    if (!text || !isMountedRef.current) return
     
-    // Stop recognition to avoid feedback loop
+    // NO llamar cancel() aquí — causa el error 'interrupted' si el componente se remounta
+    // Detener reconocimiento mientras la IA habla
     if (recognitionRef.current) {
       try { recognitionRef.current.stop() } catch(e) {}
     }
@@ -34,14 +43,41 @@ export default function CallPage() {
     setAiStatus('hablando')
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = 'es-ES'
-    utterance.rate = 1.0
+    utterance.rate = 0.95
     
+    // Selección de voz en español
+    const voices = window.speechSynthesis.getVoices()
+    const spanishVoice = voices.find(v => v.lang.startsWith('es'))
+    if (spanishVoice) {
+      utterance.voice = spanishVoice
+      console.log("🗣️ Voice:", spanishVoice.name)
+    }
+
+    utterance.onstart = () => {
+      console.log("🎙️ AI started speaking")
+    }
+
     utterance.onend = () => {
-      setAiStatus('esperando')
-      // Resume recognition after AI finishes speaking
-      if (recognitionRef.current && !isMuted) {
-        try { recognitionRef.current.start() } catch(e) {}
+      console.log("🏁 AI finished speaking")
+      if (isMountedRef.current) {
+        setAiStatus('esperando')
+        setTimeout(() => {
+          if (recognitionRef.current && !isMuted && isMountedRef.current) {
+            console.log("🎤 Resuming recognition...")
+            try { recognitionRef.current.start() } catch(e) {}
+          }
+        }, 800)
       }
+    }
+
+    utterance.onerror = (e: any) => {
+      // Ignorar 'interrupted' ya que es un artefacto del ciclo de vida
+      if (e.error === 'interrupted') {
+        console.warn("⚠️ Speech interrupted (lifecycle artifact) — ignoring")
+        return
+      }
+      console.error("❌ SpeechSynthesis error:", e.error)
+      if (isMountedRef.current) setAiStatus('esperando')
     }
 
     window.speechSynthesis.speak(utterance)
@@ -53,8 +89,12 @@ export default function CallPage() {
     setAiStatus('pensando')
     try {
       const res = await conversacionService.enviarMensaje(usuario?.id || 0, text, emocionActual.tipo)
-      setLastAiMessage(res.data.content)
-      speak(res.data.content)
+      const aiMsg = res.data.data || res.data
+      console.log("✅ AI RESPONSE TO QUESTION:", aiMsg)
+      if (aiMsg.rawContent) console.log("📝 RAW RESPONSE:", aiMsg.rawContent)
+      
+      setLastAiMessage(aiMsg.content)
+      speak(aiMsg.content)
     } catch (err) {
       console.error("Error sending voice message", err)
       setAiStatus('esperando')
@@ -68,12 +108,22 @@ export default function CallPage() {
     
     setAiStatus('pensando')
     try {
+      console.log("🚀 CALLING initiateConversation with emotion:", detectedEmotion)
       const res = await conversacionService.iniciarConversacion(detectedEmotion)
-      setLastAiMessage(res.data.content)
-      speak(res.data.content)
+      
+      // La respuesta real está en res.data.data si usamos el wrapper ApiResponse
+      const aiMsg = res.data.data || res.data
+      console.log("✅ AI RESPONSE RECEIVED:", aiMsg)
+      
+      if (aiMsg.rawContent) {
+        console.log("📝 RAW AI RESPONSE (for debug):", aiMsg.rawContent)
+      }
+      
+      setLastAiMessage(aiMsg.content)
+      speak(aiMsg.content)
     } catch (err) {
-      console.error("Error initiating conversation", err)
-      setAiStatus('esperando')
+      console.error("Error initiating conversation:", err)
+      if (isMountedRef.current) setAiStatus('esperando')
     }
   }, [speak])
 
@@ -86,16 +136,22 @@ export default function CallPage() {
       recognition.interimResults = false
       recognition.lang = 'es-ES'
 
+      recognition.onstart = () => {
+        console.log("🟢 SpeechRecognition started - Listening...")
+      }
+
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript
+        console.log("🎤 USER SAID:", transcript)
         processVoiceInput(transcript)
       }
 
       recognition.onend = () => {
+        console.log("🔴 SpeechRecognition ended")
         // Automatically restart if we are still in "esperando" mode and not muted
-        // This keeps the conversation going
         setTimeout(() => {
-          if (recognitionRef.current && !isMuted && aiStatus === 'esperando' && !window.speechSynthesis.speaking) {
+          if (recognitionRef.current && !isMuted && isMountedRef.current && !window.speechSynthesis.speaking) {
+            console.log("🔄 Auto-restarting recognition...")
             try { recognitionRef.current.start() } catch(e) {}
           }
         }, 300)
@@ -108,14 +164,15 @@ export default function CallPage() {
       if (recognitionRef.current) {
         try { recognitionRef.current.abort() } catch(e) {}
       }
-      window.speechSynthesis.cancel()
+      // NO llamar speechSynthesis.cancel() aqui — interrumpiria el audio activo
     }
   }, [isMuted, aiStatus, processVoiceInput])
 
   // --- Initiation Logic with Emotion Timeout ---
+  // SOLO se activa si el usuario ya hizo clic en "Comenzar Sesion"
   useEffect(() => {
+    if (!sessionStarted) return // <- Gatekeeper clave
     if (modelosCargados && !hasInitiatedRef.current) {
-      // Start a 3-second timer for a "stable" emotion
       emotionTimeoutRef.current = setTimeout(() => {
         console.log("Emotion detection timeout - using NEUTRAL")
         initiateAI('NEUTRAL')
@@ -125,15 +182,16 @@ export default function CallPage() {
     return () => {
       if (emotionTimeoutRef.current) clearTimeout(emotionTimeoutRef.current)
     }
-  }, [modelosCargados, initiateAI])
+  }, [sessionStarted, modelosCargados, initiateAI])
 
-  // If we detect something before the timeout, use it
+  // Si detectamos una emocion antes del timeout Y ya inicio la sesion, usarla
   useEffect(() => {
+    if (!sessionStarted) return
     if (emocionActual.tipo !== 'NEUTRAL' && !hasInitiatedRef.current && modelosCargados) {
       if (emotionTimeoutRef.current) clearTimeout(emotionTimeoutRef.current)
       initiateAI(emocionActual.tipo)
     }
-  }, [emocionActual, initiateAI, modelosCargados])
+  }, [sessionStarted, emocionActual, initiateAI, modelosCargados])
 
   const toggleMute = () => {
     if (recognitionRef.current) {
@@ -152,6 +210,23 @@ export default function CallPage() {
 
   return (
     <div className="call-page">
+      {!sessionStarted && (
+        <div className="session-start-overlay">
+          <div className="session-start-card">
+            <div className="session-start-icon">🧠</div>
+            <h2>¿Listo para empezar?</h2>
+            <p>Haz clic para activar el audio y comenzar tu sesión.</p>
+            <button className="session-start-btn" onClick={() => {
+              setSessionStarted(true)
+              setTimeout(() => {
+                if (modelosCargados) initiateAI(emocionActual.tipo)
+              }, 100)
+            }}>
+              Comenzar Sesión 📞
+            </button>
+          </div>
+        </div>
+      )}
       <div className="global-blob-1" />
       <div className="global-blob-2" />
       <div className="global-blob-3" />

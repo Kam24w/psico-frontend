@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { useEmotionDetector } from '../../hooks/useEmotionDetector'
 import EmotionBadge from './EmotionBadge'
 import type { EmocionDetectada } from '../../types/domain'
@@ -13,8 +13,12 @@ export default function CameraPanel({ onEmocionCambia }: CameraPanelProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const { emocionActual, modelosCargados, errorCamara } = useEmotionDetector(videoRef)
 
-  // Notificar al padre cuando cambia la emoción
-  if (onEmocionCambia) onEmocionCambia(emocionActual)
+  // Notificar al padre cuando cambia la emoción de forma segura
+  useEffect(() => {
+    if (onEmocionCambia) {
+      onEmocionCambia(emocionActual)
+    }
+  }, [emocionActual, onEmocionCambia])
 
   return (
     <div className="camera-panel">
