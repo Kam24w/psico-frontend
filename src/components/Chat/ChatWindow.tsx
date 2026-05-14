@@ -65,14 +65,34 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
 
   const closeModal = () => setActiveModal(null)
 
+  const fetchActiveHistory = async () => {
+    setCargando(true)
+    try {
+      const response = await conversacionService.obtenerHistorialActivo()
+      const data = (response as any).data || response
+      if (Array.isArray(data) && data.length > 0) {
+        setMensajes(data.map(m => normalizarMensaje(m as unknown as Record<string, unknown>)))
+      } else {
+        // Fallback al saludo inicial si no hay historial
+        setMensajes([{
+          id: 0,
+          content: `¡Hola, ${usuario?.nombre || 'Usuario'}! Soy tu acompañante emocional. Estoy aquí para escucharte. ¿Cómo te sientes hoy?`,
+          sender: 'AI',
+          associatedEmotion: null,
+          createdAt: new Date().toISOString(),
+        }])
+      }
+    } catch (error) {
+      console.error('Error al cargar historial activo:', error)
+    } finally {
+      setCargando(false)
+    }
+  }
+
   useEffect(() => {
-    setMensajes([{
-      id: 0,
-      content: `¡Hola, ${usuario?.nombre || 'Usuario'}! Soy tu acompañante emocional. Estoy aquí para escucharte. ¿Cómo te sientes hoy?`,
-      sender: 'AI',
-      associatedEmotion: null,
-      createdAt: new Date().toISOString(),
-    }])
+    if (usuario) {
+      fetchActiveHistory()
+    }
   }, [usuario])
 
   useEffect(() => {
