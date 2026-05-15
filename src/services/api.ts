@@ -44,7 +44,7 @@ api.interceptors.response.use(
     return res
   },
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem('psico_token')
       localStorage.removeItem('psico_usuario')
       window.location.href = '/login'
@@ -83,7 +83,7 @@ export const conversacionService = {
 
   /** Inicia una sesión de voz con un saludo de la IA */
   iniciarConversacion: (emocion: TipoEmocion) =>
-    api.post<Mensaje>('/api/conversations/initiate', { emotion }),
+    api.post<Mensaje>('/api/conversations/initiate', { emotion: emocion }),
 }
 
 // ── Emoción ───────────────────────────────────────────────────────────────────
