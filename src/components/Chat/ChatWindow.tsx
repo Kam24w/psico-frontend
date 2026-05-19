@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import ChatBubble from './ChatBubble'
 import ChatInput from './ChatInput'
 import { conversacionService } from '../../services/api'
+import { enviarMensajeIA } from '../../services/groqService'
 import { useAuth } from '../../context/AuthContext'
 import type { EmocionDetectada, Mensaje, Conversacion } from '../../types/domain'
 
@@ -128,16 +129,20 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
     setCargando(true)
 
     try {
-      const response = await conversacionService.enviarMensaje(
-        usuario.id,
-        contenido,
-        emocionActual?.tipo || 'NEUTRAL'
-      )
-      const msgIA = normalizarMensaje(response.data as unknown as Record<string, unknown>)
+      // ── IA corre en el FRONTEND (Groq API directa) ──────────────────────────
+      const respuestaIA = await enviarMensajeIA(contenido, emocionActual?.tipo || 'NEUTRAL')
+
+      const msgIA: Mensaje = {
+        id: Date.now() + 1,
+        content: respuestaIA,
+        sender: 'AI',
+        associatedEmotion: emocionActual?.tipo || 'NEUTRAL',
+        createdAt: new Date().toISOString(),
+      }
       setMensajes(prev => [...prev, msgIA])
 
     } catch (error) {
-      console.error('Error al enviar mensaje:', error)
+      console.error('Error al enviar mensaje a IA:', error)
       setMensajes(prev => [...prev, {
         id: Date.now() + 1,
         content: 'Lo siento, hubo un problema al procesar tu mensaje. ¿Puedes intentarlo de nuevo?',
