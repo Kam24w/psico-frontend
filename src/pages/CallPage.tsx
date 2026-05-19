@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useEmotionDetector } from '../hooks/useEmotionDetector'
-import { conversacionService } from '../services/api'
+import { enviarMensajeIA, iniciarSesionIA } from '../services/groqService'
 import type { TipoEmocion } from '../types/domain'
 
 export default function CallPage() {
@@ -88,18 +88,16 @@ export default function CallPage() {
     if (!text.trim()) return
     setAiStatus('pensando')
     try {
-      const res = await conversacionService.enviarMensaje(usuario?.id || 0, text, emocionActual.tipo)
-      const aiMsg = res.data.data || res.data
-      console.log("✅ AI RESPONSE TO QUESTION:", aiMsg)
-      if (aiMsg.rawContent) console.log("📝 RAW RESPONSE:", aiMsg.rawContent)
-      
-      setLastAiMessage(aiMsg.content)
-      speak(aiMsg.content)
+      // ── IA corre en el FRONTEND (Groq API directa) ──────────────────────────
+      const respuesta = await enviarMensajeIA(text, emocionActual.tipo)
+      console.log('✅ AI RESPONSE:', respuesta)
+      setLastAiMessage(respuesta)
+      speak(respuesta)
     } catch (err) {
-      console.error("Error sending voice message", err)
+      console.error('Error sending voice message', err)
       setAiStatus('esperando')
     }
-  }, [usuario, emocionActual, speak])
+  }, [emocionActual, speak])
 
   // --- AI Initiative (Initial Greeting) ---
   const initiateAI = useCallback(async (detectedEmotion: TipoEmocion) => {
@@ -108,21 +106,14 @@ export default function CallPage() {
     
     setAiStatus('pensando')
     try {
-      console.log("🚀 CALLING initiateConversation with emotion:", detectedEmotion)
-      const res = await conversacionService.iniciarConversacion(detectedEmotion)
-      
-      // La respuesta real está en res.data.data si usamos el wrapper ApiResponse
-      const aiMsg = res.data.data || res.data
-      console.log("✅ AI RESPONSE RECEIVED:", aiMsg)
-      
-      if (aiMsg.rawContent) {
-        console.log("📝 RAW AI RESPONSE (for debug):", aiMsg.rawContent)
-      }
-      
-      setLastAiMessage(aiMsg.content)
-      speak(aiMsg.content)
+      console.log('🚀 INICIANDO sesión de voz con emoción:', detectedEmotion)
+      // ── IA corre en el FRONTEND (Groq API directa) ──────────────────────────
+      const saludo = await iniciarSesionIA(detectedEmotion)
+      console.log('✅ SALUDO IA:', saludo)
+      setLastAiMessage(saludo)
+      speak(saludo)
     } catch (err) {
-      console.error("Error initiating conversation:", err)
+      console.error('Error initiating conversation:', err)
       if (isMountedRef.current) setAiStatus('esperando')
     }
   }, [speak])
@@ -138,6 +129,13 @@ export default function CallPage() {
 
       recognition.onstart = () => {
         console.log("🟢 SpeechRecognition started - Listening...")
+      }
+
+      recognition.onerror = (event: any) => {
+        console.error("❌ SpeechRecognition error:", event.error)
+        if (event.error === 'no-speech') {
+          console.warn("No speech detected.")
+        }
       }
 
       recognition.onresult = (event: any) => {
