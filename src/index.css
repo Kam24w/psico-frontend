@@ -1618,14 +1618,16 @@ body {
 }
 
 /* =========================================
-   Chat Action Modals
+   Chat Action Modals — Dark Glassmorphism
    ========================================= */
+
 
 .custom-modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 12, 41, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(8, 6, 30, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1636,13 +1638,22 @@ body {
 .custom-modal-content {
   background: #ffffff;
   width: 90%;
-  max-width: 480px;
+  max-width: 520px;
+  max-height: 85vh;
   border-radius: 20px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.2);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   animation: cardIn 0.3s ease-out;
+}
+
+/* Glass Modal Override */
+.glass-modal {
+  background: rgba(18, 14, 50, 0.85) !important;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-bottom: 2px solid rgba(139, 92, 246, 0.5);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(139,92,246,0.1);
 }
 
 .custom-modal-header {
@@ -1652,6 +1663,19 @@ body {
   padding: 20px 24px;
   border-bottom: 1px solid #eaeaea;
   background: #f8f9fa;
+  flex-shrink: 0;
+}
+
+.glass-modal-header {
+  background: rgba(255,255,255,0.03) !important;
+  border-bottom: 1px solid rgba(139,92,246,0.2) !important;
+}
+
+.glass-modal-header h3 {
+  color: #f1f0ff !important;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
 }
 
 .custom-modal-header h3 {
@@ -1664,96 +1688,391 @@ body {
 .close-modal-btn {
   background: transparent;
   border: none;
-  font-size: 18px;
-  color: #94a3b8;
+  font-size: 16px;
+  color: rgba(196,181,253,0.7);
   cursor: pointer;
   transition: color 0.2s;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-modal-btn:hover {
   color: #ef4444;
+  background: rgba(239,68,68,0.1);
 }
 
 .custom-modal-body {
   padding: 24px;
   background: #fff;
+  overflow-y: auto;
+  flex: 1;
 }
 
-.modal-textarea {
+.glass-modal-body {
+  background: transparent !important;
+  padding: 20px 24px 28px !important;
+}
+
+/* Textarea in glass modal */
+.glass-textarea {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(139,92,246,0.3) !important;
+  color: #e8e4ff !important;
+  border-radius: 12px !important;
+  resize: none;
   width: 100%;
   padding: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
   font-family: inherit;
   font-size: 14px;
-  color: #333;
-  resize: none;
   outline: none;
   transition: border-color 0.2s;
 }
 
-.modal-textarea:focus {
-  border-color: #8661C5;
-  box-shadow: 0 0 0 3px rgba(134, 97, 197, 0.1);
+.glass-textarea::placeholder {
+  color: rgba(196,181,253,0.4);
 }
 
-.modal-history-list {
+.glass-textarea:focus {
+  border-color: rgba(139,92,246,0.6) !important;
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
+}
+
+/* ── History Modal ──────────────────────────── */
+.modal-history-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hist-subtitle {
+  font-size: 12px;
+  color: rgba(196,181,253,0.6);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0 0 8px 0;
+}
+
+.glass-history-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  max-height: 380px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139,92,246,0.3) transparent;
+}
+
+.glass-history-list::-webkit-scrollbar { width: 4px; }
+.glass-history-list::-webkit-scrollbar-thumb {
+  background: rgba(139,92,246,0.3);
+  border-radius: 4px;
+}
+
+.glass-history-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(139,92,246,0.15);
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
 }
 
-.modal-history-list li {
-  padding: 16px;
-  border-radius: 12px;
-  background: #f8f9fa;
-  border: 1px solid #eaeaea;
-  font-size: 14px;
-  color: #475569;
+.glass-history-item:hover {
+  background: rgba(139,92,246,0.12);
+  border-color: rgba(139,92,246,0.4);
+  transform: translateX(2px);
+}
+
+.hist-item-left {
   display: flex;
   align-items: center;
   gap: 12px;
-  cursor: pointer;
-  transition: background 0.2s;
+  flex: 1;
+  min-width: 0;
 }
 
-.modal-history-list li:hover {
-  background: #f1f5f9;
+.hist-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
 }
 
-.hist-date {
-  font-size: 11px;
+.hist-item-date {
+  font-size: 14px;
   font-weight: 600;
-  color: #8661C5;
-  background: rgba(134, 97, 197, 0.1);
-  padding: 4px 8px;
-  border-radius: 6px;
-  min-width: 80px;
-  text-align: center;
+  color: #f1f0ff;
 }
 
-.modal-settings {
+.hist-item-meta {
+  font-size: 12px;
+  color: rgba(196,181,253,0.65);
+}
+
+.hist-status.status-active {
+  color: #2dd4bf;
+  font-weight: 600;
+}
+
+.hist-status.status-done {
+  color: rgba(196,181,253,0.6);
+}
+
+.hist-item-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.hist-chevron {
+  font-size: 20px;
+  color: rgba(139,92,246,0.6);
+  transition: transform 0.2s;
+}
+
+.glass-history-item:hover .hist-chevron {
+  transform: translateX(3px);
+  color: #a78bfa;
+}
+
+/* Tipo Badge */
+.hist-tipo-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.badge-texto {
+  background: rgba(99,102,241,0.2);
+  color: #818cf8;
+  border: 1px solid rgba(99,102,241,0.3);
+}
+
+.badge-video {
+  background: rgba(236,72,153,0.2);
+  color: #f472b6;
+  border: 1px solid rgba(236,72,153,0.3);
+}
+
+/* Delete Session Button */
+.delete-session-btn {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  opacity: 0.5;
+  transition: all 0.2s;
+}
+
+.delete-session-btn:hover {
+  opacity: 1;
+  background: rgba(239,68,68,0.15);
+  transform: scale(1.1);
+}
+
+/* ── Sesión Detail View ────────────── */
+.hist-session-detail {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.setting-label {
+.hist-back-btn {
+  background: rgba(139,92,246,0.1);
+  border: 1px solid rgba(139,92,246,0.25);
+  color: #a78bfa;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+  transition: all 0.2s;
+}
+
+.hist-back-btn:hover {
+  background: rgba(139,92,246,0.2);
+  border-color: rgba(139,92,246,0.5);
+}
+
+.hist-session-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(139,92,246,0.15);
+}
+
+.hist-detail-date {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f1f0ff;
+  flex: 1;
+}
+
+.hist-detail-count {
+  font-size: 12px;
+  color: rgba(196,181,253,0.6);
+}
+
+.hist-messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139,92,246,0.3) transparent;
+  padding-right: 4px;
+}
+
+.hist-messages-list::-webkit-scrollbar { width: 4px; }
+.hist-messages-list::-webkit-scrollbar-thumb {
+  background: rgba(139,92,246,0.3);
+  border-radius: 4px;
+}
+
+.hist-msg-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+.hist-msg-ai {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(139,92,246,0.1);
+  align-items: flex-start;
+}
+
+.hist-msg-user {
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.2);
+  align-items: flex-end;
+}
+
+.hist-msg-sender {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(196,181,253,0.6);
+}
+
+.hist-msg-text {
+  font-size: 14px;
+  color: #e8e4ff;
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.hist-msg-time {
+  font-size: 11px;
+  color: rgba(196,181,253,0.4);
+}
+
+/* Empty/Loading states */
+.hist-empty {
+  text-align: center;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.hist-empty-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.hist-empty p {
+  color: rgba(196,181,253,0.6);
+  font-size: 14px;
+  margin: 0;
+}
+
+.hist-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 0;
+  color: rgba(196,181,253,0.7);
+  font-size: 14px;
+}
+
+.hist-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(139,92,246,0.2);
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.modal-history-message {
+  text-align: center;
+  color: rgba(196,181,253,0.6);
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+/* ── Settings in glass modal ──────── */
+.glass-setting-label {
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 14px;
-  color: #334155;
+  color: rgba(196,181,253,0.9) !important;
   cursor: pointer;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(139,92,246,0.1);
+  background: rgba(255,255,255,0.03);
+  transition: all 0.2s;
 }
 
-.setting-label input[type="checkbox"] {
+.glass-setting-label:hover {
+  background: rgba(139,92,246,0.08);
+  border-color: rgba(139,92,246,0.25);
+}
+
+.glass-setting-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: #8661C5;
+  accent-color: #8b5cf6;
+}
+
+.modal-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .save-settings-btn {
@@ -1761,27 +2080,37 @@ body {
   width: 100%;
   padding: 14px;
   border-radius: 12px;
-  background: #8661C5;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: #fff;
   font-weight: 600;
   border: none;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  font-size: 14px;
 }
 
 .save-settings-btn:hover {
-  background: #714bb0;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99,102,241,0.35);
 }
 
-.modal-history-message {
-  text-align: center;
-  color: #64748b;
-  margin-top: 10px;
+/* ── New Session Button ────────────── */
+.new-session-btn {
+  background: rgba(99,102,241,0.08) !important;
+  border-color: rgba(99,102,241,0.25) !important;
+  color: #6366f1 !important;
+}
+
+.new-session-btn:hover {
+  background: rgba(99,102,241,0.18) !important;
+  border-color: rgba(99,102,241,0.5) !important;
+  color: #818cf8 !important;
 }
 
 .hidden-file-input {
   display: none;
 }
+
 /* Overlay para inicio de sesion de voz */
 .session-start-overlay {
   position: fixed;
@@ -1841,3 +2170,126 @@ body {
   box-shadow: 0 15px 30px rgba(99, 102, 241, 0.5);
 }
 
+/* =========================================
+   MODO OSCURO — Dark Mode Chat
+   ========================================= */
+
+.chat-main-light.dark-mode {
+  background: #0d0b1f;
+}
+
+.dark-mode .light-cw-root {
+  background: transparent;
+}
+
+.dark-mode .light-cw-header {
+  background: rgba(18, 14, 50, 0.95);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.dark-mode .light-cw-header-info h2 {
+  color: #f1f0ff;
+}
+
+.dark-mode .light-cw-header-info p {
+  color: #2dd4bf;
+}
+
+.dark-mode .light-header-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+.dark-mode .light-header-btn:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.dark-mode .light-cw-avatar-circle {
+  background: linear-gradient(135deg, #5b5fcf, #8b5cf6);
+}
+
+.dark-mode .light-timeline-divider span {
+  background: #0d0b1f;
+  color: rgba(196, 181, 253, 0.5);
+}
+
+.dark-mode .light-timeline-divider::before {
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.dark-mode .light-cw-messages {
+  background: transparent;
+}
+
+.dark-mode .light-bubble-ai {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  color: #e8e4ff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .light-bubble-user {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+}
+
+.dark-mode .light-bubble-time {
+  color: rgba(196, 181, 253, 0.45);
+}
+
+.dark-mode .light-avatar-ai {
+  background: linear-gradient(135deg, #5b5fcf, #8b5cf6);
+}
+
+.dark-mode .light-avatar-user {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(196, 181, 253, 0.8);
+}
+
+.dark-mode .light-typing-bubble {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.dark-mode .light-typing-bubble span {
+  background: rgba(139, 92, 246, 0.6);
+}
+
+.dark-mode .light-cw-footer {
+  background: rgba(13, 11, 31, 0.8);
+  border-top: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.dark-mode .light-input-form {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+.dark-mode .light-input-form:focus-within {
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.dark-mode .light-textarea {
+  color: #f1f0ff;
+  background: transparent;
+}
+
+.dark-mode .light-textarea::placeholder {
+  color: rgba(196, 181, 253, 0.35);
+}
+
+.dark-mode .light-send-btn {
+  background: rgba(139, 92, 246, 0.15);
+  color: rgba(139, 92, 246, 0.6);
+}
+
+.dark-mode .light-send-btn.ready {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+}
+
+.dark-mode .security-badge-inline {
+  color: rgba(196, 181, 253, 0.4);
+}

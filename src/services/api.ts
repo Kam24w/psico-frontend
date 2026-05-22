@@ -62,28 +62,41 @@ export const authService = {
 // ── Conversación ──────────────────────────────────────────────────────────────
 export const conversacionService = {
   /** Envía un mensaje y recibe la respuesta de la IA (MensajeResponse) */
-  enviarMensaje: (usuarioId: number, contenido: string, emocion: TipoEmocion) =>
+  enviarMensaje: (usuarioId: number, contenido: string, emocion: TipoEmocion, tipoSesion: string = 'TEXTO') =>
     api.post<Mensaje>('/api/conversations/message', {
       usuarioId,
       contenido,
       emocion,
+      tipoSesion,
     }),
 
   /** Historial de mensajes de una conversación */
   obtenerHistorial: (conversacionId: number) =>
     api.get<Mensaje[]>(`/api/conversations/history/${conversacionId}`),
 
-  /** Historial de la sesión activa para el usuario actual (usando JWT) */
-  obtenerHistorialActivo: () =>
-    api.get<Mensaje[]>('/api/conversations/active-history'),
+  /** Historial de la sesión activa para el usuario actual (usando JWT), filtrado por tipo */
+  obtenerHistorialActivo: (tipoSesion: string = 'TEXTO') =>
+    api.get<Mensaje[]>('/api/conversations/active-history', { params: { tipoSesion } }),
 
   /** Lista de conversaciones de un usuario */
   obtenerConversaciones: (usuarioId: number) =>
     api.get<Conversacion[]>(`/api/conversations/user/${usuarioId}`),
 
   /** Inicia una sesión de voz con un saludo de la IA */
-  iniciarConversacion: (emocion: TipoEmocion) =>
-    api.post<Mensaje>('/api/conversations/initiate', { emotion: emocion }),
+  iniciarConversacion: (emocion: TipoEmocion, tipo: string = 'VIDEO') =>
+    api.post<Mensaje>('/api/conversations/initiate', { emotion: emocion, tipo }),
+
+  /** Cierra la sesión activa actual para empezar una nueva */
+  cerrarSesionActiva: (userId: number, tipoSesion: string = 'TEXTO') =>
+    api.post<void>('/api/conversations/active/close', null, { params: { userId, tipoSesion } }),
+
+  /** Elimina permanentemente una sesión del historial */
+  eliminarSesion: (conversationId: number) =>
+    api.delete<void>(`/api/conversations/${conversationId}`),
+
+  /** Obtiene los mensajes de una sesión pasada por su ID */
+  obtenerMensajesSesion: (conversationId: number) =>
+    api.get<Mensaje[]>(`/api/conversations/history/${conversationId}`),
 }
 
 // ── Emoción ───────────────────────────────────────────────────────────────────

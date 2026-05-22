@@ -89,7 +89,7 @@ export default function CallPage() {
     setAiStatus('pensando')
     try {
       // ── Llamar al backend que orquesta la IA, memoria y riesgo ──────────────────────────
-      const response = await conversacionService.enviarMensaje(usuario.id, text, emocionActual.tipo || 'NEUTRAL');
+      const response = await conversacionService.enviarMensaje(usuario.id, text, emocionActual.tipo || 'NEUTRAL', 'VIDEO');
       const data = (response as any).data || response;
       const respuesta = data.content || data.cleaned || (typeof data === 'string' ? data : 'Error procesando respuesta');
       console.log('✅ AI RESPONSE:', respuesta)
@@ -110,7 +110,7 @@ export default function CallPage() {
     try {
       console.log('🚀 INICIANDO sesión de voz con emoción:', detectedEmotion)
       // ── Llamar al backend que orquesta la IA, memoria y riesgo ──────────────────────────
-      const response = await conversacionService.iniciarConversacion(detectedEmotion);
+      const response = await conversacionService.iniciarConversacion(detectedEmotion, 'VIDEO');
       const data = (response as any).data || response;
       const saludo = data.content || data.cleaned || (typeof data === 'string' ? data : 'Hola, ¿cómo te sientes?');
       console.log('✅ SALUDO IA:', saludo)
