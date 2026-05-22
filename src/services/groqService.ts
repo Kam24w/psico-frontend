@@ -49,7 +49,8 @@ function detectarNivelRiesgo(mensaje: string): number {
 async function llamarGroq(
   systemPrompt: string,
   userMessage: string,
-  nivelRiesgo: number
+  nivelRiesgo: number,
+  historial: { role: string, content: string }[] = []
 ): Promise<string> {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY as string | undefined
 
@@ -74,6 +75,7 @@ async function llamarGroq(
         temperature,
         messages: [
           { role: 'system', content: systemPrompt },
+          ...historial,
           { role: 'user',   content: userMessage },
         ],
       }),
@@ -100,12 +102,17 @@ async function llamarGroq(
  * Envía un mensaje de chat al psicólogo virtual.
  * @param contenido  Texto del usuario
  * @param emocion    Emoción detectada por la cámara
+ * @param historial  Historial de mensajes previos para contexto
  * @returns          Respuesta de texto de la IA
  */
-export async function enviarMensajeIA(contenido: string, emocion: TipoEmocion): Promise<string> {
+export async function enviarMensajeIA(
+  contenido: string, 
+  emocion: TipoEmocion, 
+  historial: {role: string, content: string}[] = []
+): Promise<string> {
   const nivelRiesgo = detectarNivelRiesgo(contenido)
   const systemPrompt = buildSystemPrompt(emocion)
-  return llamarGroq(systemPrompt, contenido, nivelRiesgo)
+  return llamarGroq(systemPrompt, contenido, nivelRiesgo, historial)
 }
 
 /**

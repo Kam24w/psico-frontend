@@ -89,10 +89,24 @@ export default function CallPage() {
     setAiStatus('pensando')
     try {
       // ── IA corre en el FRONTEND (Groq API directa) ──────────────────────────
+      // Idealmente, también pasamos historial de VIDEO aquí, pero por ahora conservamos la llamada básica
       const respuesta = await enviarMensajeIA(text, emocionActual.tipo)
       console.log('✅ AI RESPONSE:', respuesta)
       setLastAiMessage(respuesta)
       speak(respuesta)
+      
+      // Sincronizar con el backend
+      if (usuario?.id) {
+         try {
+           await conversacionService.sincronizarMensajes(
+             usuario.id,
+             text,
+             respuesta,
+             emocionActual.tipo,
+             'VIDEO'
+           )
+         } catch(e) { console.error('Error syncing video msg', e) }
+      }
     } catch (err) {
       console.error('Error sending voice message', err)
       setAiStatus('esperando')
@@ -107,11 +121,29 @@ export default function CallPage() {
     setAiStatus('pensando')
     try {
       console.log('🚀 INICIANDO sesión de voz con emoción:', detectedEmotion)
+      // Cerrar cualquier sesión de voz activa previa
+      try {
+        if (usuario?.id) await conversacionService.cerrarSesionActiva(usuario.id, 'VIDEO')
+      } catch(e) {}
+      
       // ── IA corre en el FRONTEND (Groq API directa) ──────────────────────────
       const saludo = await iniciarSesionIA(detectedEmotion)
       console.log('✅ SALUDO IA:', saludo)
       setLastAiMessage(saludo)
       speak(saludo)
+      
+      // Sincronizar el saludo inicial
+      if (usuario?.id) {
+         try {
+           await conversacionService.sincronizarMensajes(
+             usuario.id,
+             "El usuario acaba de iniciar la llamada.",
+             saludo,
+             detectedEmotion,
+             'VIDEO'
+           )
+         } catch(e) { console.error('Error syncing video init', e) }
+      }
     } catch (err) {
       console.error('Error initiating conversation:', err)
       if (isMountedRef.current) setAiStatus('esperando')
