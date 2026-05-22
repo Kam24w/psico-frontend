@@ -87,6 +87,7 @@ export default function RegisterPage() {
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
               required
+              maxLength={20}
             />
           </div>
           <div className="auth-field">
@@ -96,6 +97,7 @@ export default function RegisterPage() {
               value={form.confirmPassword}
               onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
               required
+              maxLength={20}
             />
           </div>
           {error && <p className="auth-error">{error}</p>}

@@ -237,6 +237,8 @@ export default function CallPage() {
     recognition.onstart = () => {
       isListeningRef.current = true
       setIsListening(true)
+      // Resetear retries si logramos empezar bien
+      ;(recognitionRef.current as any)._networkRetries = 0
       console.log('[VOZ] MIC_STARTED (confirmed by onstart)')
     }
 
@@ -285,12 +287,23 @@ export default function CallPage() {
 
       // Fallback para error de red: Chrome a veces lanza 'network' sin razón o por saturación.
       if (event.error === 'network' && conversationModeRef.current === 'free' && isMountedRef.current && !isMutedRef.current && !isProcessingRef.current) {
-        console.log('[VOZ] Retrying after network error in 1.5s...')
-        setTimeout(() => {
-          if (conversationModeRef.current === 'free' && !isListeningRef.current && !isMutedRef.current && !isProcessingRef.current) {
-            startListening()
-          }
-        }, 1500)
+        
+        // Evitar el bucle infinito si el error de red es permanente (ej. Brave Browser o bloqueador activo)
+        const currentRetries = (recognitionRef.current as any)._networkRetries || 0
+        
+        if (currentRetries < 2) {
+          ;(recognitionRef.current as any)._networkRetries = currentRetries + 1
+          console.log(`[VOZ] Retrying after network error (${currentRetries + 1}/2)...`)
+          setTimeout(() => {
+            if (conversationModeRef.current === 'free' && !isListeningRef.current && !isMutedRef.current && !isProcessingRef.current) {
+              startListening()
+            }
+          }, 1500)
+        } else {
+          console.error('[VOZ] Bucle de error de red detectado. El navegador está bloqueando permanentemente el micrófono.')
+          alert('Tu navegador está bloqueando la conexión al servidor de voz. Por favor usa Google Chrome, desactiva bloqueadores de anuncios o usa el Chat de Texto.')
+          // Detenemos los intentos
+        }
       }
     }
 
@@ -461,84 +474,86 @@ export default function CallPage() {
         </div>
       </div>
 
-      <div className="call-action-area">
-        {lastAiMessage && (
-          <div className="call-ai-subtitle">
-            "{lastAiMessage}"
-          </div>
-        )}
+      <div className="call-controls-wrapper">
+        <div className="call-action-area">
+          {lastAiMessage && (
+            <div className="call-ai-subtitle">
+              "{lastAiMessage}"
+            </div>
+          )}
 
-        {conversationMode === 'push-to-talk' && sessionStarted && (
-          <div className="call-ptt-container">
-            <button
-              className={`call-ptt-btn ${isListening ? 'listening' : ''} ${(aiStatus !== 'esperando' || isMuted) ? 'disabled' : ''}`}
-              onClick={() => {
-                if (aiStatus !== 'esperando' || isMuted) return
-                if (isListening) {
-                  stopListening()
-                } else {
+          {conversationMode === 'push-to-talk' && sessionStarted && (
+            <div className="call-ptt-container">
+              <button
+                className={`call-ptt-btn ${isListening ? 'listening' : ''} ${(aiStatus !== 'esperando' || isMuted) ? 'disabled' : ''}`}
+                onClick={() => {
+                  if (aiStatus !== 'esperando' || isMuted) return
+                  if (isListening) {
+                    stopListening()
+                  } else {
+                    startListening()
+                  }
+                }}
+                disabled={aiStatus !== 'esperando' || isMuted}
+              >
+                <span className="ptt-icon">🎤</span>
+                <span className="ptt-text">
+                  {isListening ? 'Escuchando... Pulsa para enviar' : 'Presiona para Hablar'}
+                </span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="call-dock">
+          <button
+            className={`call-dock-btn ${isMuted ? 'muted' : ''}`}
+            onClick={toggleMute}
+            title={isMuted ? "Activar micrófono" : "Silenciar micrófono"}
+          >
+            <span className="btn-icon">{isMuted ? '🔇' : '🎙️'}</span>
+          </button>
+
+          <button
+            className={`call-dock-btn secondary-action ${conversationMode === 'free' ? 'active-mode' : ''}`}
+            onClick={() => {
+              const newMode = conversationMode === 'free' ? 'push-to-talk' : 'free'
+              setConversationMode(newMode)
+              conversationModeRef.current = newMode
+              console.log(`[VOZ] MODE_CHANGED: ${newMode}`)
+              
+              if (newMode === 'push-to-talk') {
+                stopListening()
+              } else {
+                if (aiStatus === 'esperando' && !isProcessingRef.current) {
                   startListening()
                 }
-              }}
-              disabled={aiStatus !== 'esperando' || isMuted}
-            >
-              <span className="ptt-icon">🎤</span>
-              <span className="ptt-text">
-                {isListening ? 'Escuchando... Pulsa para enviar' : 'Presiona para Hablar'}
-              </span>
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="call-dock">
-        <button
-          className={`call-dock-btn ${isMuted ? 'muted' : ''}`}
-          onClick={toggleMute}
-          title={isMuted ? "Activar micrófono" : "Silenciar micrófono"}
-        >
-          <span className="btn-icon">{isMuted ? '🔇' : '🎙️'}</span>
-        </button>
-
-        <button
-          className={`call-dock-btn secondary-action ${conversationMode === 'free' ? 'active-mode' : ''}`}
-          onClick={() => {
-            const newMode = conversationMode === 'free' ? 'push-to-talk' : 'free'
-            setConversationMode(newMode)
-            conversationModeRef.current = newMode
-            console.log(`[VOZ] MODE_CHANGED: ${newMode}`)
-            
-            if (newMode === 'push-to-talk') {
-              stopListening()
-            } else {
-              if (aiStatus === 'esperando' && !isProcessingRef.current) {
-                startListening()
               }
-            }
-          }}
-          title={conversationMode === 'free' ? "Cambiar a modo Push-To-Talk" : "Cambiar a modo Conversación Libre"}
-        >
-          <span className="btn-icon">{conversationMode === 'free' ? '🗣️' : '🎤'}</span>
-          <span className="btn-text">
-            {conversationMode === 'free' ? 'Modo Libre' : 'Modo PTT'}
-          </span>
-        </button>
+            }}
+            title={conversationMode === 'free' ? "Cambiar a modo Push-To-Talk" : "Cambiar a modo Conversación Libre"}
+          >
+            <span className="btn-icon">{conversationMode === 'free' ? '🗣️' : '🎤'}</span>
+            <span className="btn-text">
+              {conversationMode === 'free' ? 'Modo Libre' : 'Modo PTT'}
+            </span>
+          </button>
 
-        <button
-          className="call-dock-btn secondary-action"
-          onClick={() => navigate('/chat')}
-        >
-          <span className="btn-icon">💬</span>
-          <span className="btn-text">Chat de Texto</span>
-        </button>
+          <button
+            className="call-dock-btn secondary-action"
+            onClick={() => navigate('/chat')}
+          >
+            <span className="btn-icon">💬</span>
+            <span className="btn-text">Chat de Texto</span>
+          </button>
 
-        <button
-          className="call-dock-btn end-call"
-          onClick={endCall}
-        >
-          <span className="btn-icon">✖</span>
-          <span className="btn-text">Finalizar</span>
-        </button>
+          <button
+            className="call-dock-btn end-call"
+            onClick={endCall}
+          >
+            <span className="btn-icon">✖</span>
+            <span className="btn-text">Finalizar</span>
+          </button>
+        </div>
       </div>
     </div>
   )
