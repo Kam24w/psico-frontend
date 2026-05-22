@@ -71,6 +71,7 @@ export default function RegisterPage() {
             <input
               className="auth-input" type="text" placeholder="Tu nombre"
             value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
+            maxLength={20}
             />
           </div>
           <div className="auth-field">
@@ -78,6 +79,7 @@ export default function RegisterPage() {
             <input
               className="auth-input" type="email" placeholder="tu@correo.com"
               value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required
+              maxLength={30}
             />
           </div>
           <div className="auth-field">
