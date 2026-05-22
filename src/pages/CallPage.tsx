@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useEmotionDetector } from '../hooks/useEmotionDetector'
-import { enviarMensajeIA, iniciarSesionIA } from '../services/groqService'
+import { conversacionService } from '../services/api'
 import type { TipoEmocion } from '../types/domain'
 
 export default function CallPage() {
@@ -88,8 +88,10 @@ export default function CallPage() {
     if (!text.trim()) return
     setAiStatus('pensando')
     try {
-      // ── IA corre en el FRONTEND (Groq API directa) ──────────────────────────
-      const respuesta = await enviarMensajeIA(text, emocionActual.tipo)
+      // ── Llamar al backend que orquesta la IA, memoria y riesgo ──────────────────────────
+      const response = await conversacionService.enviarMensaje(usuario.id, text, emocionActual.tipo || 'NEUTRAL');
+      const data = (response as any).data || response;
+      const respuesta = data.content || data.cleaned || (typeof data === 'string' ? data : 'Error procesando respuesta');
       console.log('✅ AI RESPONSE:', respuesta)
       setLastAiMessage(respuesta)
       speak(respuesta)
@@ -107,8 +109,10 @@ export default function CallPage() {
     setAiStatus('pensando')
     try {
       console.log('🚀 INICIANDO sesión de voz con emoción:', detectedEmotion)
-      // ── IA corre en el FRONTEND (Groq API directa) ──────────────────────────
-      const saludo = await iniciarSesionIA(detectedEmotion)
+      // ── Llamar al backend que orquesta la IA, memoria y riesgo ──────────────────────────
+      const response = await conversacionService.iniciarConversacion(detectedEmotion);
+      const data = (response as any).data || response;
+      const saludo = data.content || data.cleaned || (typeof data === 'string' ? data : 'Hola, ¿cómo te sientes?');
       console.log('✅ SALUDO IA:', saludo)
       setLastAiMessage(saludo)
       speak(saludo)
