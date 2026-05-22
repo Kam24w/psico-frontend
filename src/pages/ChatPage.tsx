@@ -6,13 +6,55 @@ import { useAuth } from '../context/AuthContext'
 import type { EmocionDetectada } from '../types/domain'
 
 export default function ChatPage() {
-  const [emocionActual, setEmocionActual] = useState<EmocionDetectada>({ tipo: 'NEUTRAL', intensidad: 0 })
+  const [emocionActual, setEmocionActual] = useState<EmocionDetectada>({ type: 'NEUTRAL', intensity: 0 })
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => {
     logout()
     navigate('/login')
+  }
+
+  const rawType = emocionActual?.type || (emocionActual as any)?.tipo || 'NEUTRAL';
+  
+  // Mapping for emoji representation
+  const getEmotionEmoji = (type: string) => {
+    switch (type) {
+      case 'NEUTRAL': return '😐';
+      case 'HAPPY':
+      case 'FELIZ': return '😊';
+      case 'SAD':
+      case 'TRISTE': return '😢';
+      case 'STRESSED':
+      case 'ESTRESADO': return '😰';
+      case 'ANGRY':
+      case 'ENOJADO': return '😠';
+      case 'ANXIOUS':
+      case 'ANSIOSO': return '😟';
+      case 'SURPRISED':
+      case 'SORPRENDIDO': return '😲';
+      default: return '🧠';
+    }
+  }
+
+  // Mapping for Spanish label in UI
+  const getEmotionLabelEs = (type: string) => {
+    switch (type) {
+      case 'HAPPY':
+      case 'FELIZ': return 'Feliz';
+      case 'SAD':
+      case 'TRISTE': return 'Triste';
+      case 'STRESSED':
+      case 'ESTRESADO': return 'Estresado';
+      case 'ANGRY':
+      case 'ENOJADO': return 'Enojado';
+      case 'ANXIOUS':
+      case 'ANSIOSO': return 'Ansioso';
+      case 'SURPRISED':
+      case 'SORPRENDIDO': return 'Sorprendido';
+      case 'NEUTRAL': return 'Neutral';
+      default: return type;
+    }
   }
 
   return (
@@ -41,13 +83,11 @@ export default function ChatPage() {
             <h3 className="sidebar-section-title">EMOCIÓN DETECTADA</h3>
             <div className="emotion-display-card">
               <div className="emotion-display-icon">
-                {emocionActual.tipo === 'NEUTRAL' ? '😐' : 
-                 emocionActual.tipo === 'FELIZ' ? '😊' :
-                 emocionActual.tipo === 'TRISTE' ? '😢' : '🧠'}
+                {getEmotionEmoji(rawType)}
               </div>
               <div className="emotion-display-text">
-                <span className="emotion-name">{emocionActual.tipo === 'NEUTRAL' ? 'Neutral' : emocionActual.tipo}</span>
-                <span className="emotion-sub">Ligeramente {emocionActual.tipo.toLowerCase()}</span>
+                <span className="emotion-name">{getEmotionLabelEs(rawType)}</span>
+                <span className="emotion-sub">Ligeramente {getEmotionLabelEs(rawType).toLowerCase()}</span>
               </div>
             </div>
             <p className="emotion-help-text">
@@ -65,13 +105,13 @@ export default function ChatPage() {
 
         <div className="sidebar-footer">
            <button className="sidebar-action-btn" onClick={() => navigate('/call')}>📞 Llamada</button>
-           <button className="sidebar-action-btn sidebar-logout-btn" onClick={handleLogout}>Salir ({usuario?.nombre})</button>
+           <button className="sidebar-action-btn sidebar-logout-btn" onClick={handleLogout}>Salir ({usuario?.name || (usuario as any)?.nombre || ''})</button>
         </div>
       </aside>
 
       {/* Main Chat Area Blanco */}
       <main className="chat-main-light">
-        <ChatWindow emocionActual={emocionActual} />
+        <ChatWindow currentEmotion={emocionActual} emocionActual={emocionActual} />
       </main>
     </div>
   )
