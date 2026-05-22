@@ -1,53 +1,63 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
-import type { AuthPayload, Usuario } from '../types/domain'
+import type { AuthPayload, User } from '../types/domain'
 
 interface AuthContextValue {
-  usuario: Usuario | null;
+  user: User | null;
   token: string | null;
   login: (data: AuthPayload) => void;
   logout: () => void;
+  loading: boolean;
+  // Compatibility properties for Spanish transition
+  usuario: User | null;
   cargando: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [usuario, setUsuario] = useState<Usuario | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [token, setToken]     = useState<string | null>(null)
-  const [cargando, setCargando] = useState(true)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const tokenGuardado   = localStorage.getItem('psico_token')
-    const usuarioGuardado = localStorage.getItem('psico_usuario')
-    if (tokenGuardado && usuarioGuardado) {
-      setToken(tokenGuardado)
-      setUsuario(JSON.parse(usuarioGuardado))
+    const savedToken = localStorage.getItem('psico_token')
+    const savedUser = localStorage.getItem('psico_usuario')
+    if (savedToken && savedUser) {
+      setToken(savedToken)
+      setUser(JSON.parse(savedUser))
     }
-    setCargando(false)
+    setLoading(false)
   }, [])
 
   const login = (data: AuthPayload) => {
-    // El backend devuelve userId/name; mantenemos el modelo interno con id/nombre
-    const id     = data.userId ?? data.usuarioId ?? 0
-    const nombre = data.name ?? data.nombre ?? ''
-    const usuarioLocal: Usuario = { id, nombre, email: data.email }
+    const id = data.userId ?? data.usuarioId ?? 0
+    const name = data.name ?? data.nombre ?? ''
+    const localUser: User = { id, name, email: data.email }
 
     setToken(data.token)
-    setUsuario(usuarioLocal)
+    setUser(localUser)
     localStorage.setItem('psico_token', data.token)
-    localStorage.setItem('psico_usuario', JSON.stringify(usuarioLocal))
+    localStorage.setItem('psico_usuario', JSON.stringify(localUser))
   }
 
   const logout = () => {
     setToken(null)
-    setUsuario(null)
+    setUser(null)
     localStorage.removeItem('psico_token')
     localStorage.removeItem('psico_usuario')
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, token, login, logout, cargando }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      login, 
+      logout, 
+      loading,
+      usuario: user,
+      cargando: loading
+    }}>
       {children}
     </AuthContext.Provider>
   )
