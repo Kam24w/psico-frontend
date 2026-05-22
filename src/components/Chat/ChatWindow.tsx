@@ -3,6 +3,7 @@ import ChatBubble from './ChatBubble'
 import ChatInput from './ChatInput'
 import { conversacionService } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 import type { EmocionDetectada, Mensaje, Conversacion } from '../../types/domain'
 
 interface ChatWindowProps {
@@ -26,6 +27,8 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
 
   // Estado para nueva sesión (confirmación)
   const [confirmandoNuevaSesion, setConfirmandoNuevaSesion] = useState(false)
+
+  const { showToast, showConfirm } = useToast()
 
   const [ajustes, setAjustes] = useState(() => {
     const saved = localStorage.getItem('psico_ajustes')
@@ -55,7 +58,7 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
 
   const guardarAjustes = () => {
     localStorage.setItem('psico_ajustes', JSON.stringify(ajustes))
-    alert('✅ Ajustes guardados correctamente.')
+    showToast('Ajustes guardados correctamente.', 'success')
     closeModal()
   }
 
@@ -107,20 +110,24 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
   }
 
   // ── Eliminar sesión del historial ──────────────────────────────────────
-  const eliminarSesion = async (sesion: Conversacion, e: React.MouseEvent) => {
+  const eliminarSesion = (sesion: Conversacion, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!window.confirm(`¿Eliminar esta sesión del ${sesion.createdAt ? new Date(sesion.createdAt).toLocaleDateString() : 'historial'} permanentemente?`)) return
-    try {
-      await conversacionService.eliminarSesion(sesion.id)
-      setHistorialSesiones(prev => prev.filter(s => s.id !== sesion.id))
-      if (sesionSeleccionada?.id === sesion.id) {
-        setSesionSeleccionada(null)
-        setMensajesSesion([])
+    const fechaStr = sesion.createdAt ? new Date(sesion.createdAt).toLocaleDateString() : 'historial';
+    
+    showConfirm(`¿Eliminar esta sesión del ${fechaStr} permanentemente?`, async () => {
+      try {
+        await conversacionService.eliminarSesion(sesion.id)
+        setHistorialSesiones(prev => prev.filter(s => s.id !== sesion.id))
+        if (sesionSeleccionada?.id === sesion.id) {
+          setSesionSeleccionada(null)
+          setMensajesSesion([])
+        }
+        showToast('Sesión eliminada permanentemente', 'success')
+      } catch (error) {
+        console.error('Error al eliminar sesión:', error)
+        showToast('No se pudo eliminar la sesión. Inténtalo de nuevo.', 'error')
       }
-    } catch (error) {
-      console.error('Error al eliminar sesión:', error)
-      alert('No se pudo eliminar la sesión. Inténtalo de nuevo.')
-    }
+    });
   }
 
   // ── Nueva sesión ───────────────────────────────────────────────────────

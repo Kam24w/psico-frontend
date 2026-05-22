@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ToastProvider } from './context/ToastContext'
 import type { ReactNode } from 'react'
 import LoginPage    from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -16,8 +17,9 @@ function RutaProtegida({ children }: { children: ReactNode }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <ToastProvider>
+      <AuthProvider>
+        <BrowserRouter>
         <Routes>
           <Route path="/"         element={<Navigate to="/call" replace />} />
           <Route path="/login"    element={<LoginPage />} />
@@ -35,5 +37,7 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </ToastProvider>
   )
 }
+
