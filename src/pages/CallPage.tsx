@@ -38,6 +38,8 @@ export default function CallPage() {
   const isMutedRef      = useRef(false)   // Espejo ref de isMuted para closures sin stale state
   const conversationModeRef = useRef<ConversationMode>('free')
 
+  const accumulatedTextRef = useRef('')
+
   // Sincronizar isMutedRef con el estado React
   useEffect(() => {
     isMutedRef.current = isMuted
@@ -62,12 +64,14 @@ export default function CallPage() {
     if (!isMountedRef.current)         { console.log('[VOZ] MIC_BLOCKED: componente desmontado'); return }
 
     try {
+      // PTT = continuous true para que no se corte al pausar de hablar
+      recognitionRef.current.continuous = conversationModeRef.current === 'push-to-talk'
+      accumulatedTextRef.current = '' // Reset
       recognitionRef.current.start()
       isListeningRef.current = true
       setIsListening(true)
-      console.log('[VOZ] MIC_STARTED')
+      console.log('[VOZ] MIC_STARTED', conversationModeRef.current)
     } catch (e: any) {
-      // InvalidStateError: ya estaba activo (seguridad extra)
       console.warn('[VOZ] MIC_START_ERROR:', e?.message)
       isListeningRef.current = false
       setIsListening(false)
@@ -78,14 +82,12 @@ export default function CallPage() {
   const stopListening = useCallback(() => {
     if (!recognitionRef.current || !isListeningRef.current) return
     try {
+      // Al llamar a stop(), el navegador finalizará el audio actual,
+      // disparará onresult (si hubo voz) y finalmente onend.
       recognitionRef.current.stop()
-      isListeningRef.current = false
-      setIsListening(false)
-      console.log('[VOZ] MIC_STOPPED')
+      console.log('[VOZ] MIC_STOP_REQUESTED')
     } catch (e: any) {
       console.warn('[VOZ] MIC_STOP_ERROR:', e?.message)
-      isListeningRef.current = false
-      setIsListening(false)
     }
   }, [])
 
@@ -239,14 +241,26 @@ export default function CallPage() {
     }
 
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript
-      console.log('[VOZ] USER_SAID:', transcript)
-      try {
-        recognition.stop()
-      } catch (e) {}
-      isListeningRef.current = false
-      setIsListening(false)
-      processVoiceInput(transcript)
+      let currentTranscript = ''
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          currentTranscript += event.results[i][0].transcript + ' '
+        }
+      }
+      
+      currentTranscript = currentTranscript.trim()
+      if (!currentTranscript) return
+
+      if (conversationModeRef.current === 'free') {
+        console.log('[VOZ] USER_SAID (Free):', currentTranscript)
+        try { recognition.stop() } catch (e) {}
+        // En modo libre, procesamos inmediatamente y dejamos que stop() desencadene onend
+        processVoiceInput(currentTranscript)
+      } else {
+        // En modo PTT, acumulamos el texto y no interrumpimos la grabación.
+        accumulatedTextRef.current += currentTranscript + ' '
+        console.log('[VOZ] ACCUMULATING (PTT):', accumulatedTextRef.current)
+      }
     }
 
     recognition.onerror = (event: any) => {
@@ -257,26 +271,43 @@ export default function CallPage() {
         setIsListening(false)
         return
       }
-      // 'no-speech': el usuario no habló. NO reactivar aquí — se evita el loop
+      // 'no-speech': el usuario no habló.
       if (event.error === 'no-speech') {
         console.log('[VOZ] MIC_NO_SPEECH (silence detected — waiting)')
         isListeningRef.current = false
         setIsListening(false)
         return
       }
+      
       console.error('[VOZ] MIC_ERROR:', event.error)
       isListeningRef.current = false
       setIsListening(false)
+
+      // Fallback para error de red: Chrome a veces lanza 'network' sin razón o por saturación.
+      if (event.error === 'network' && conversationModeRef.current === 'free' && isMountedRef.current && !isMutedRef.current && !isProcessingRef.current) {
+        console.log('[VOZ] Retrying after network error in 1.5s...')
+        setTimeout(() => {
+          if (conversationModeRef.current === 'free' && !isListeningRef.current && !isMutedRef.current && !isProcessingRef.current) {
+            startListening()
+          }
+        }, 1500)
+      }
     }
 
     recognition.onend = () => {
-      // ⚠️ CRÍTICO: NO llamar recognition.start() aquí.
-      // El auto-restart eliminado era la causa #1 de todos los loops y race conditions.
-      // La reactivación del micrófono es EXCLUSIVA responsabilidad de utterance.onend
-      // o de una acción directa del usuario (unmute/PTT).
       isListeningRef.current = false
       setIsListening(false)
       console.log('[VOZ] MIC_STOPPED (recognition ended)')
+      
+      // En modo PTT, cuando el mic se apaga de verdad, enviamos lo que hayamos acumulado.
+      if (conversationModeRef.current === 'push-to-talk') {
+         const finalTxt = accumulatedTextRef.current.trim()
+         if (finalTxt && !isProcessingRef.current) {
+           console.log('[VOZ] SENDING ACCUMULATED PTT TEXT:', finalTxt)
+           processVoiceInput(finalTxt)
+         }
+         accumulatedTextRef.current = '' // Limpiar buffer
+      }
     }
 
     recognitionRef.current = recognition
