@@ -18,8 +18,6 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const [historialSesiones, setHistorialSesiones] = useState<Conversacion[]>([])
   const [cargandoHistorial, setCargandoHistorial] = useState(false)
-  const [sesionSeleccionada, setSesionSeleccionada] = useState<number | null>(null)
-  const [mensajesHistorial, setMensajesHistorial] = useState<Mensaje[]>([])
   const [notas, setNotas] = useState(() => localStorage.getItem('psico_notas') || '')
 
   // Estado para visualizar mensajes de sesiones pasadas
@@ -236,6 +234,7 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
       const response = await conversacionService.enviarMensaje(usuario.id, contenido, emocionActual?.tipo || 'NEUTRAL', 'TEXTO');
       const data = (response as any).data || response;
       const msgIA = normalizarMensaje(data as unknown as Record<string, unknown>);
+      const respuestaIA = msgIA.content
 
       setMensajes(prev => [...prev, msgIA])
 

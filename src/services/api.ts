@@ -90,17 +90,25 @@ export const conversacionService = {
   cerrarSesionActiva: (usuarioId: number, tipoSesion: string = 'TEXTO') =>
     api.post('/api/conversations/active/close', null, { params: { userId: usuarioId, tipoSesion } }),
 
+  /** Sincroniza el contenido de la conversación con el backend */
+  sincronizarMensajes: (
+    usuarioId: number,
+    userContent: string,
+    aiContent: string,
+    emocion: TipoEmocion,
+    tipoSesion: string = 'TEXTO'
+  ) =>
+    api.post<Mensaje[]>('/api/conversations/sync', {
+      usuarioId,
+      userContent,
+      aiContent,
+      emocion,
+      tipoSesion,
+    }),
+
   /** Inicia una sesión de voz con un saludo de la IA */
   iniciarConversacion: (emocion: TipoEmocion, tipo: string = 'VIDEO') =>
     api.post<Mensaje>('/api/conversations/initiate', { emotion: emocion, tipo }),
-
-  /** Cierra la sesión activa actual para empezar una nueva */
-  cerrarSesionActiva: (userId: number, tipoSesion: string = 'TEXTO') =>
-    api.post<void>('/api/conversations/active/close', null, { params: { userId, tipoSesion } }),
-
-  /** Elimina permanentemente una sesión del historial */
-  eliminarSesion: (conversationId: number) =>
-    api.delete<void>(`/api/conversations/${conversationId}`),
 
   /** Obtiene los mensajes de una sesión pasada por su ID */
   obtenerMensajesSesion: (conversationId: number) =>
