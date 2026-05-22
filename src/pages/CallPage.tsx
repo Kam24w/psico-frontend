@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useEmotionDetector } from '../hooks/useEmotionDetector'
-import { enviarMensajeIA, iniciarSesionIA } from '../services/groqService'
+import { conversacionService } from '../services/api'
 import type { TipoEmocion } from '../types/domain'
 
 export default function CallPage() {
@@ -88,25 +88,13 @@ export default function CallPage() {
     if (!text.trim()) return
     setAiStatus('pensando')
     try {
-      // ── IA corre en el FRONTEND (Groq API directa) ──────────────────────────
-      // Idealmente, también pasamos historial de VIDEO aquí, pero por ahora conservamos la llamada básica
-      const respuesta = await enviarMensajeIA(text, emocionActual.tipo)
+      // ── Llamar al backend que orquesta la IA, memoria y riesgo ──────────────────────────
+      const response = await conversacionService.enviarMensaje(usuario.id, text, emocionActual.tipo || 'NEUTRAL', 'VIDEO');
+      const data = (response as any).data || response;
+      const respuesta = data.content || data.cleaned || (typeof data === 'string' ? data : 'Error procesando respuesta');
       console.log('✅ AI RESPONSE:', respuesta)
       setLastAiMessage(respuesta)
       speak(respuesta)
-      
-      // Sincronizar con el backend
-      if (usuario?.id) {
-         try {
-           await conversacionService.sincronizarMensajes(
-             usuario.id,
-             text,
-             respuesta,
-             emocionActual.tipo,
-             'VIDEO'
-           )
-         } catch(e) { console.error('Error syncing video msg', e) }
-      }
     } catch (err) {
       console.error('Error sending voice message', err)
       setAiStatus('esperando')
@@ -121,29 +109,13 @@ export default function CallPage() {
     setAiStatus('pensando')
     try {
       console.log('🚀 INICIANDO sesión de voz con emoción:', detectedEmotion)
-      // Cerrar cualquier sesión de voz activa previa
-      try {
-        if (usuario?.id) await conversacionService.cerrarSesionActiva(usuario.id, 'VIDEO')
-      } catch(e) {}
-      
-      // ── IA corre en el FRONTEND (Groq API directa) ──────────────────────────
-      const saludo = await iniciarSesionIA(detectedEmotion)
+      // ── Llamar al backend que orquesta la IA, memoria y riesgo ──────────────────────────
+      const response = await conversacionService.iniciarConversacion(detectedEmotion, 'VIDEO');
+      const data = (response as any).data || response;
+      const saludo = data.content || data.cleaned || (typeof data === 'string' ? data : 'Hola, ¿cómo te sientes?');
       console.log('✅ SALUDO IA:', saludo)
       setLastAiMessage(saludo)
       speak(saludo)
-      
-      // Sincronizar el saludo inicial
-      if (usuario?.id) {
-         try {
-           await conversacionService.sincronizarMensajes(
-             usuario.id,
-             "El usuario acaba de iniciar la llamada.",
-             saludo,
-             detectedEmotion,
-             'VIDEO'
-           )
-         } catch(e) { console.error('Error syncing video init', e) }
-      }
     } catch (err) {
       console.error('Error initiating conversation:', err)
       if (isMountedRef.current) setAiStatus('esperando')

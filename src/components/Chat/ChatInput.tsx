@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import { UI_TEXTS } from '../../constants/texts'
+import { useToast } from '../../context/ToastContext'
 
 interface ChatInputProps {
   onEnviar: (contenido: string) => void;
@@ -14,6 +15,7 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recognitionRef = useRef<any>(null)
+  const { showToast } = useToast()
 
   useEffect(() => {
     const ta = textareaRef.current
@@ -79,7 +81,7 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      alert(`Has seleccionado el archivo: "${e.target.files[0].name}".\n\nEl análisis de documentos/imágenes está en desarrollo.`);
+      showToast(`Has seleccionado el archivo: "${e.target.files[0].name}". El análisis está en desarrollo.`, 'info');
       // Resetear para permitir seleccionar el mismo archivo de nuevo
       e.target.value = '';
     }
@@ -87,7 +89,7 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
 
   const handleAudio = () => {
     if (!recognitionRef.current) {
-      alert('Tu navegador no soporta dictado por voz. Te recomendamos usar Google Chrome o Edge.')
+      showToast('Tu navegador no soporta dictado por voz. Te recomendamos usar Google Chrome o Edge.', 'error')
       return
     }
 

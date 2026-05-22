@@ -83,6 +83,7 @@ export interface Conversacion {
   createdAt: string;
   updatedAt: string;
   active: boolean;
+  tipo?: string; // 'TEXTO' | 'VIDEO'
 }
 
 // ── Intervenciones ────────────────────────────────────────────────────────────
