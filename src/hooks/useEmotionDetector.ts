@@ -52,17 +52,26 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
         try {
           const tf = (faceapi as any).tf;
           if (tf) {
-            // Desactivar WebGL agresivamente para evitar el error de 'backend'
-            if (tf.ENV && tf.ENV.set) {
-              tf.ENV.set('WEBGL_VERSION', 0);
-            }
-            if (typeof tf.setBackend === 'function') {
-              await tf.setBackend('cpu');
-              console.log("Aggressively forced TF backend to: cpu");
+            // Intenta usar WebGL (Aceleración por GPU) para un rendimiento ultra rápido
+            try {
+              if (typeof tf.setBackend === 'function') {
+                await tf.setBackend('webgl');
+                console.log("TF backend set to: webgl (GPU accelerated!)");
+              }
+            } catch (webglError) {
+              console.warn("WebGL not supported or failed, falling back to CPU:", webglError);
+              // Desactivar WebGL e ir a CPU como fallback seguro
+              if (tf.ENV && tf.ENV.set) {
+                tf.ENV.set('WEBGL_VERSION', 0);
+              }
+              if (typeof tf.setBackend === 'function') {
+                await tf.setBackend('cpu');
+                console.log("Forced TF backend to: cpu");
+              }
             }
           }
         } catch (tfError) {
-          console.warn("Could not disable WebGL or force CPU:", tfError);
+          console.warn("Could not configure TF backend:", tfError);
         }
         
         await Promise.all([

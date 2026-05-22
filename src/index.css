@@ -36,47 +36,20 @@ body {
    ========================================= */
 
 @keyframes neuralDrift1 {
-
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  40% {
-    transform: translate(50px, -70px) scale(1.1);
-  }
-
-  70% {
-    transform: translate(-30px, 35px) scale(0.95);
-  }
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  40% { transform: translate3d(50px, -70px, 0) scale(1.1); }
+  70% { transform: translate3d(-30px, 35px, 0) scale(0.95); }
 }
 
 @keyframes neuralDrift2 {
-
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  35% {
-    transform: translate(-55px, 50px) scale(1.07);
-  }
-
-  65% {
-    transform: translate(40px, -40px) scale(1.04);
-  }
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  35% { transform: translate3d(-55px, 50px, 0) scale(1.07); }
+  65% { transform: translate3d(40px, -40px, 0) scale(1.04); }
 }
 
 @keyframes neuralDrift3 {
-
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  50% {
-    transform: translate(25px, 65px) scale(1.09);
-  }
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(25px, 65px, 0) scale(1.09); }
 }
 
 .global-blob-1,
@@ -85,6 +58,7 @@ body {
   position: fixed;
   z-index: 0;
   pointer-events: none;
+  will-change: transform;
 }
 
 .global-blob-1 {
