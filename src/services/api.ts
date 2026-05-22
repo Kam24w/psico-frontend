@@ -44,7 +44,7 @@ api.interceptors.response.use(
     return res
   },
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem('psico_token')
       localStorage.removeItem('psico_usuario')
       window.location.href = '/login'
@@ -74,16 +74,34 @@ export const conversacionService = {
     api.get<Mensaje[]>(`/api/conversations/history/${conversacionId}`),
 
   /** Historial de la sesión activa para el usuario actual (usando JWT) */
-  obtenerHistorialActivo: () =>
-    api.get<Mensaje[]>('/api/conversations/active-history'),
+  obtenerHistorialActivo: (tipoSesion: string = 'TEXTO') =>
+    api.get<Mensaje[]>('/api/conversations/active-history', { params: { tipoSesion } }),
 
   /** Lista de conversaciones de un usuario */
   obtenerConversaciones: (usuarioId: number) =>
     api.get<Conversacion[]>(`/api/conversations/user/${usuarioId}`),
 
+  /** Elimina una sesión y sus mensajes */
+  eliminarSesion: (conversacionId: number) =>
+    api.delete(`/api/conversations/${conversacionId}`),
+
+  /** Cierra la sesión activa actual para iniciar una nueva en el próximo mensaje */
+  cerrarSesionActiva: (usuarioId: number, tipoSesion: string = 'TEXTO') =>
+    api.post('/api/conversations/active/close', null, { params: { userId: usuarioId, tipoSesion } }),
+
   /** Inicia una sesión de voz con un saludo de la IA */
-  iniciarConversacion: (emocion: TipoEmocion) =>
-    api.post<Mensaje>('/api/conversations/initiate', { emotion: emocion }),
+  iniciarConversacion: (emocion: TipoEmocion, tipoSesion: string = 'TEXTO') =>
+    api.post<Mensaje>('/api/conversations/initiate', { emotion: emocion, tipoSesion }),
+
+  /** Sincroniza mensajes locales con el backend */
+  sincronizarMensajes: (usuarioId: number, userContent: string, aiContent: string, emocion: TipoEmocion, tipoSesion: string = 'TEXTO') =>
+    api.post<Mensaje[]>('/api/conversations/sync', {
+      usuarioId,
+      userContent,
+      aiContent,
+      emocion,
+      tipoSesion
+    }),
 }
 
 // ── Emoción ───────────────────────────────────────────────────────────────────

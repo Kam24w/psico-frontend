@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import ChatBubble from './ChatBubble'
 import ChatInput from './ChatInput'
 import { conversacionService } from '../../services/api'
+import { enviarMensajeIA } from '../../services/groqService'
 import { useAuth } from '../../context/AuthContext'
 import type { EmocionDetectada, Mensaje, Conversacion } from '../../types/domain'
 
@@ -17,6 +18,8 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const [historialSesiones, setHistorialSesiones] = useState<Conversacion[]>([])
   const [cargandoHistorial, setCargandoHistorial] = useState(false)
+  const [sesionSeleccionada, setSesionSeleccionada] = useState<number | null>(null)
+  const [mensajesHistorial, setMensajesHistorial] = useState<Mensaje[]>([])
   const [notas, setNotas] = useState(() => localStorage.getItem('psico_notas') || '')
   
   const [ajustes, setAjustes] = useState(() => {
@@ -48,6 +51,22 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
   const handleActionClick = async (accion: string) => {
     setActiveModal(accion)
 
+    if (accion === 'Nueva Sesión' && usuario?.id) {
+      if (confirm('¿Estás seguro de que quieres iniciar una nueva sesión? El chat actual se cerrará y se guardará en el historial.')) {
+        try {
+          await conversacionService.cerrarSesionActiva(usuario.id, 'TEXTO')
+          // Fetch again, which will start a new session
+          fetchActiveHistory()
+          setActiveModal(null)
+        } catch (error) {
+          console.error('Error al iniciar nueva sesión:', error)
+        }
+      } else {
+        setActiveModal(null)
+      }
+      return
+    }
+
     if (accion === 'Historial de Sesiones' && usuario?.id) {
       setCargandoHistorial(true)
       try {
@@ -63,7 +82,40 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
     }
   }
 
-  const closeModal = () => setActiveModal(null)
+  const closeModal = () => {
+    setActiveModal(null)
+    setSesionSeleccionada(null)
+    setMensajesHistorial([])
+  }
+
+  const handleSelectSession = async (convId: number) => {
+    setSesionSeleccionada(convId)
+    setCargandoHistorial(true)
+    try {
+      const response = await conversacionService.obtenerHistorial(convId)
+      const data = (response as any).data || response
+      setMensajesHistorial(Array.isArray(data) ? data.map(m => normalizarMensaje(m as any)) : [])
+    } catch (error) {
+      console.error('Error al cargar mensajes de historial:', error)
+    } finally {
+      setCargandoHistorial(false)
+    }
+  }
+
+  const handleDeleteSession = async (convId: number, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent selecting the session
+    if (confirm('¿Estás seguro de que deseas eliminar esta sesión y todos sus mensajes permanentemente?')) {
+      try {
+        await conversacionService.eliminarSesion(convId)
+        setHistorialSesiones(prev => prev.filter(c => c.id !== convId))
+        if (sesionSeleccionada === convId) {
+          setSesionSeleccionada(null)
+        }
+      } catch (error) {
+        console.error('Error al eliminar sesión:', error)
+      }
+    }
+  }
 
   const fetchActiveHistory = async () => {
     setCargando(true)
@@ -128,16 +180,40 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
     setCargando(true)
 
     try {
-      const response = await conversacionService.enviarMensaje(
-        usuario.id,
-        contenido,
-        emocionActual?.tipo || 'NEUTRAL'
-      )
-      const msgIA = normalizarMensaje(response.data as unknown as Record<string, unknown>)
+      // Convertir historial existente para Groq
+      const historial = mensajes
+        .filter(m => m.id !== 0) // ignorar mensaje inicial de saludo por defecto si es id 0
+        .map(m => ({
+          role: m.sender === 'USER' ? 'user' : 'assistant',
+          content: m.content
+        }))
+
+      // ── IA corre en el FRONTEND (Groq API directa) ──────────────────────────
+      const respuestaIA = await enviarMensajeIA(contenido, emocionActual?.tipo || 'NEUTRAL', historial)
+
+      const msgIA: Mensaje = {
+        id: Date.now() + 1,
+        content: respuestaIA,
+        sender: 'AI',
+        associatedEmotion: emocionActual?.tipo || 'NEUTRAL',
+        createdAt: new Date().toISOString(),
+      }
       setMensajes(prev => [...prev, msgIA])
 
+      // Sincronizar con el backend
+      try {
+        await conversacionService.sincronizarMensajes(
+          usuario.id,
+          contenido,
+          respuestaIA,
+          emocionActual?.tipo || 'NEUTRAL'
+        )
+      } catch (syncError) {
+        console.error('Error al sincronizar mensajes con el backend:', syncError)
+      }
+
     } catch (error) {
-      console.error('Error al enviar mensaje:', error)
+      console.error('Error al enviar mensaje a IA:', error)
       setMensajes(prev => [...prev, {
         id: Date.now() + 1,
         content: 'Lo siento, hubo un problema al procesar tu mensaje. ¿Puedes intentarlo de nuevo?',
@@ -151,7 +227,7 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
   }
 
   return (
-    <div className="light-cw-root">
+    <div className={`light-cw-root ${ajustes.modoOscuro ? 'dark-mode' : ''}`}>
       {/* Header Light */}
       <header className="light-cw-header">
         <div className="light-cw-header-left">
@@ -162,6 +238,7 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
           </div>
         </div>
         <div className="light-cw-header-actions">
+          <button className="light-header-btn" title="Nueva Sesión" onClick={() => handleActionClick('Nueva Sesión')}>➕</button>
           <button className="light-header-btn" title="Notas" onClick={() => handleActionClick('Notas Clínicas')}>📄</button>
           <button className="light-header-btn" title="Historial" onClick={() => handleActionClick('Historial de Sesiones')}>📋</button>
           <button className="light-header-btn" title="Ajustes" onClick={() => handleActionClick('Ajustes del Asistente')}>⚙️</button>
@@ -215,17 +292,58 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
               )}
               {activeModal === 'Historial de Sesiones' && (
                 <div className="modal-history-container">
-                  {cargandoHistorial ? (
+                  {sesionSeleccionada ? (
+                    <div className="modal-history-messages-view">
+                      <button 
+                        onClick={() => setSesionSeleccionada(null)} 
+                        className="btn-volver-glass"
+                      >
+                        ⬅ Volver a sesiones
+                      </button>
+                      <div className="modal-messages-list" style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
+                        {cargandoHistorial ? (
+                           <p className="modal-history-message">Cargando mensajes...</p>
+                        ) : mensajesHistorial.length > 0 ? (
+                           mensajesHistorial.map(msg => (
+                             <div key={msg.id} className={`modal-msg ${msg.sender === 'USER' ? 'modal-msg-user' : 'modal-msg-ai'}`}>
+                               <strong style={{ color: msg.sender === 'USER' ? '#c4b5fd' : '#e2e8f0', display: 'block', marginBottom: '4px' }}>
+                                 {msg.sender === 'USER' ? 'Tú' : 'IA Psicólogo'}
+                               </strong>
+                               <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
+                             </div>
+                           ))
+                        ) : (
+                           <p className="modal-history-message">No hay mensajes en esta sesión.</p>
+                        )}
+                      </div>
+                    </div>
+                  ) : cargandoHistorial ? (
                     <p className="modal-history-message">Cargando sesiones...</p>
                   ) : historialSesiones.length > 0 ? (
                     <ul className="modal-history-list">
                       {historialSesiones.map((conv, index) => (
-                        <li key={conv.id || index}>
-                          <span className="hist-date">
-                            {conv.createdAt ? new Date(conv.createdAt).toLocaleDateString() : 'Anterior'}
-                          </span>
-                          <strong>Sesión {conv.id}</strong>
-                          {conv.active ? ' - En progreso' : ' - Finalizada'}
+                        <li 
+                          key={conv.id || index} 
+                          className="hist-session-item"
+                          onClick={() => conv.id && handleSelectSession(conv.id)}
+                        >
+                          <div className="hist-session-info">
+                            <div className="hist-session-title">
+                              Sesión {conv.id} 
+                              {conv.tipo && <span className="hist-session-badge">{conv.tipo}</span>}
+                              {conv.active ? <span className="hist-session-badge" style={{background: 'rgba(34, 197, 94, 0.2)', color: '#86efac', borderColor: 'rgba(34,197,94,0.3)'}}>En progreso</span> : ''}
+                            </div>
+                            <span className="hist-date">
+                              {conv.createdAt ? new Date(conv.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Anterior'}
+                            </span>
+                          </div>
+                          <button 
+                            className="hist-delete-btn"
+                            onClick={(e) => conv.id && handleDeleteSession(conv.id, e)}
+                            title="Eliminar sesión"
+                          >
+                            🗑️
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -252,7 +370,7 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
                       checked={ajustes.modoOscuro} 
                       onChange={e => handleAjusteChange('modoOscuro', e.target.checked)} 
                     /> 
-                    Modo oscuro (Próximamente)
+                    Modo oscuro
                   </label>
                   <label className="setting-label">
                     <input 
