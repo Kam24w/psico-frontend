@@ -82,6 +82,14 @@ export const conversacionService = {
   obtenerConversaciones: (usuarioId: number) =>
     api.get<Conversacion[]>(`/api/conversations/user/${usuarioId}`),
 
+  /** Elimina una sesión y sus mensajes */
+  eliminarSesion: (conversacionId: number) =>
+    api.delete(`/api/conversations/${conversacionId}`),
+
+  /** Cierra la sesión activa actual para iniciar una nueva en el próximo mensaje */
+  cerrarSesionActiva: (usuarioId: number, tipoSesion: string = 'TEXTO') =>
+    api.post('/api/conversations/active/close', null, { params: { userId: usuarioId, tipoSesion } }),
+
   /** Inicia una sesión de voz con un saludo de la IA */
   iniciarConversacion: (emocion: TipoEmocion, tipo: string = 'VIDEO') =>
     api.post<Mensaje>('/api/conversations/initiate', { emotion: emocion, tipo }),

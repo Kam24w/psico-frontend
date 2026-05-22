@@ -1645,7 +1645,10 @@ body {
 }
 
 .custom-modal-content {
-  background: #ffffff;
+  background: rgba(25, 20, 50, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(167, 139, 250, 0.3);
   width: 90%;
   max-width: 520px;
   max-height: 85vh;
@@ -1654,7 +1657,8 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: cardIn 0.3s ease-out;
+  animation: cardIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #f1f0ff;
 }
 
 /* Glass Modal Override */
@@ -1689,9 +1693,10 @@ body {
 
 .custom-modal-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  color: #333;
+  color: #f1f0ff;
+  letter-spacing: -0.5px;
 }
 
 .close-modal-btn {
@@ -1738,7 +1743,11 @@ body {
   font-family: inherit;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
+}
+
+.modal-textarea::placeholder {
+  color: rgba(196, 181, 253, 0.4);
 }
 
 .glass-textarea::placeholder {
@@ -2085,13 +2094,14 @@ body {
 }
 
 .save-settings-btn {
-  margin-top: 16px;
+  margin-top: 24px;
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   border-radius: 12px;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 15px;
   border: none;
   cursor: pointer;
   transition: all 0.2s;

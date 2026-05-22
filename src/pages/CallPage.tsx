@@ -176,6 +176,19 @@ export default function CallPage() {
       setLastAiMessage(respuesta)
       // speak() apagará el mic y lo reactivará cuando termine
       speak(respuesta)
+      
+      // Sincronizar con el backend
+      if (usuario?.id) {
+         try {
+           await conversacionService.sincronizarMensajes(
+             usuario.id,
+             text,
+             respuesta,
+             emocionActual.tipo,
+             'VIDEO'
+           )
+         } catch(e) { console.error('Error syncing video msg', e) }
+      }
     } catch (err) {
       console.error('[VOZ] BACKEND_ERROR:', err)
       setAiStatus('esperando')
@@ -204,6 +217,19 @@ export default function CallPage() {
       console.log('[VOZ] GREETING_RECEIVED:', saludo.substring(0, 50) + '...')
       setLastAiMessage(saludo)
       speak(saludo)
+      
+      // Sincronizar el saludo inicial
+      if (usuario?.id) {
+         try {
+           await conversacionService.sincronizarMensajes(
+             usuario.id,
+             "El usuario acaba de iniciar la llamada.",
+             saludo,
+             detectedEmotion,
+             'VIDEO'
+           )
+         } catch(e) { console.error('Error syncing video init', e) }
+      }
     } catch (err) {
       console.error('[VOZ] GREETING_ERROR:', err)
       if (isMountedRef.current) {

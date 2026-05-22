@@ -18,6 +18,8 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const [historialSesiones, setHistorialSesiones] = useState<Conversacion[]>([])
   const [cargandoHistorial, setCargandoHistorial] = useState(false)
+  const [sesionSeleccionada, setSesionSeleccionada] = useState<number | null>(null)
+  const [mensajesHistorial, setMensajesHistorial] = useState<Mensaje[]>([])
   const [notas, setNotas] = useState(() => localStorage.getItem('psico_notas') || '')
 
   // Estado para visualizar mensajes de sesiones pasadas
@@ -72,6 +74,22 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
     setSesionSeleccionada(null)
     setMensajesSesion([])
     setActiveModal(accion)
+
+    if (accion === 'Nueva Sesión' && usuario?.id) {
+      if (confirm('¿Estás seguro de que quieres iniciar una nueva sesión? El chat actual se cerrará y se guardará en el historial.')) {
+        try {
+          await conversacionService.cerrarSesionActiva(usuario.id, 'TEXTO')
+          // Fetch again, which will start a new session
+          fetchActiveHistory()
+          setActiveModal(null)
+        } catch (error) {
+          console.error('Error al iniciar nueva sesión:', error)
+        }
+      } else {
+        setActiveModal(null)
+      }
+      return
+    }
 
     if (accion === 'Historial de Sesiones' && usuario?.id) {
       setCargandoHistorial(true)
@@ -221,6 +239,18 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
 
       setMensajes(prev => [...prev, msgIA])
 
+      // Sincronizar con el backend
+      try {
+        await conversacionService.sincronizarMensajes(
+          usuario.id,
+          contenido,
+          respuestaIA,
+          emocionActual?.tipo || 'NEUTRAL'
+        )
+      } catch (syncError) {
+        console.error('Error al sincronizar mensajes con el backend:', syncError)
+      }
+
     } catch (error) {
       console.error('Error al enviar mensaje a IA:', error)
       setMensajes(prev => [...prev, {
@@ -247,7 +277,7 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
   }
 
   return (
-    <div className="light-cw-root">
+    <div className={`light-cw-root ${ajustes.modoOscuro ? 'dark-mode' : ''}`}>
       {/* Header Light */}
       <header className="light-cw-header">
         <div className="light-cw-header-left">
