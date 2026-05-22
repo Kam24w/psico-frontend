@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import ChatBubble from './ChatBubble'
 import ChatInput from './ChatInput'
 import { conversacionService } from '../../services/api'
-import { enviarMensajeIA } from '../../services/groqService'
 import { useAuth } from '../../context/AuthContext'
 import type { EmocionDetectada, Mensaje, Conversacion } from '../../types/domain'
 
@@ -129,16 +128,11 @@ export default function ChatWindow({ emocionActual }: ChatWindowProps) {
     setCargando(true)
 
     try {
-      // ── IA corre en el FRONTEND (Groq API directa) ──────────────────────────
-      const respuestaIA = await enviarMensajeIA(contenido, emocionActual?.tipo || 'NEUTRAL')
-
-      const msgIA: Mensaje = {
-        id: Date.now() + 1,
-        content: respuestaIA,
-        sender: 'AI',
-        associatedEmotion: emocionActual?.tipo || 'NEUTRAL',
-        createdAt: new Date().toISOString(),
-      }
+      // ── Llamar al backend que orquesta la IA, memoria y riesgo ──────────────────────────
+      const response = await conversacionService.enviarMensaje(usuario.id, contenido, emocionActual?.tipo || 'NEUTRAL');
+      const data = (response as any).data || response;
+      const msgIA = normalizarMensaje(data as unknown as Record<string, unknown>);
+      
       setMensajes(prev => [...prev, msgIA])
 
     } catch (error) {
