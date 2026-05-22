@@ -70,6 +70,7 @@ export default function LoginPage() {
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
               required
+              maxLength={20}
             />
           </div>
           {error && <p className="auth-error">{error}</p>}
