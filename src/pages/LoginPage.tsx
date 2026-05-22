@@ -59,6 +59,7 @@ export default function LoginPage() {
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })}
               required
+              maxLength={30}
             />
           </div>
           <div className="auth-field">
