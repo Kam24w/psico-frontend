@@ -61,7 +61,12 @@ export default function CallPage() {
 
   useEffect(() => {
     isMountedRef.current = true
-    return () => { isMountedRef.current = false }
+    return () => {
+      isMountedRef.current = false
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+    }
   }, [])
 
   // ── startListening ─────
@@ -363,6 +368,9 @@ export default function CallPage() {
 
   const endCall = () => {
     stopListening()
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
     navigate('/chat')
   }
 
@@ -383,7 +391,7 @@ export default function CallPage() {
       {!sessionStarted && (
         <div className="session-start-overlay">
           <div className="session-start-card">
-            <div className="session-start-icon">🧠</div>
+            <img src="/Logo.png" alt="MindSee Logo" className="session-start-logo" />
             <h2>¿Listo para empezar?</h2>
             <p>Selecciona tu modo de interacción preferido para comenzar la sesión.</p>
             

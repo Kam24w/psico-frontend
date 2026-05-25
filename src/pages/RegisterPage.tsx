@@ -59,6 +59,12 @@ export default function RegisterPage() {
       <div className="global-blob-3" />
 
       <div className="auth-card">
+        <div className="auth-brand">
+          <div className="auth-brand-title-container">
+            <img src="/Logo.png" alt="MindSee Logo" className="auth-brand-logo-only" />
+            <h1 className="auth-brand-name">MindSee</h1>
+          </div>
+        </div>
 
         <div className="auth-header">
           <h1 className="auth-title">Crea tu cuenta</h1>
@@ -108,9 +114,9 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="auth-link-text">
+        <p className="auth-footer">
           ¿Ya tienes cuenta?{' '}
-          <Link to="/login" className="auth-link-action">Inicia sesión</Link>
+          <Link to="/login" className="auth-link">Inicia sesión</Link>
         </p>
       </div>
 
