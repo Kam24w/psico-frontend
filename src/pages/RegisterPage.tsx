@@ -59,6 +59,12 @@ export default function RegisterPage() {
       <div className="global-blob-3" />
 
       <div className="auth-card">
+        <div className="auth-brand">
+          <div className="auth-brand-title-container">
+            <img src="/Logo.png" alt="MindSee Logo" className="auth-brand-logo-only" />
+            <h1 className="auth-brand-name">MindSee</h1>
+          </div>
+        </div>
 
         <div className="auth-header">
           <h1 className="auth-title">Crea tu cuenta</h1>
@@ -71,6 +77,7 @@ export default function RegisterPage() {
             <input
               className="auth-input" type="text" placeholder="Tu nombre"
             value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
+            maxLength={20}
             />
           </div>
           <div className="auth-field">
@@ -78,6 +85,7 @@ export default function RegisterPage() {
             <input
               className="auth-input" type="email" placeholder="tu@correo.com"
               value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required
+              maxLength={30}
             />
           </div>
           <div className="auth-field">
@@ -87,6 +95,7 @@ export default function RegisterPage() {
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
               required
+              maxLength={20}
             />
           </div>
           <div className="auth-field">
@@ -96,6 +105,7 @@ export default function RegisterPage() {
               value={form.confirmPassword}
               onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
               required
+              maxLength={20}
             />
           </div>
           {error && <p className="auth-error">{error}</p>}
@@ -104,9 +114,9 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="auth-link-text">
+        <p className="auth-footer">
           ¿Ya tienes cuenta?{' '}
-          <Link to="/login" className="auth-link-action">Inicia sesión</Link>
+          <Link to="/login" className="auth-link">Inicia sesión</Link>
         </p>
       </div>
 

@@ -1,8 +1,8 @@
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
-export interface Usuario {
+export interface User {
   id: number;
-  nombre: string;
+  name: string;
   email: string;
 }
 
@@ -12,8 +12,8 @@ export interface AuthPayload {
   userId: number;
   name: string;
   email: string;
-  rol?: string;
-  // Aliases para compatibilidad interna del frontend
+  role?: string;
+  // Aliases para compatibilidad interna
   usuarioId?: number;
   nombre?: string;
 }
@@ -32,18 +32,18 @@ export interface RegisterRequest {
 
 // ── Emociones ─────────────────────────────────────────────────────────────────
 
-export type TipoEmocion =
-  | 'FELIZ'
-  | 'TRISTE'
-  | 'ESTRESADO'
-  | 'ENOJADO'
-  | 'ANSIOSO'
-  | 'SORPRENDIDO'
+export type EmotionType =
+  | 'HAPPY'
+  | 'SAD'
+  | 'STRESSED'
+  | 'ANGRY'
+  | 'ANXIOUS'
+  | 'SURPRISED'
   | 'NEUTRAL';
 
-export interface EmocionDetectada {
-  tipo: TipoEmocion;
-  intensidad: number;
+export interface DetectedEmotion {
+  type: EmotionType;
+  intensity: number;
   raw?: string;
 }
 
@@ -51,56 +51,65 @@ export interface EmocionDetectada {
 export interface Emotion {
   id: number;
   userId: number;
-  emotionType: TipoEmocion;
+  emotionType: EmotionType;
   intensity: number;
   registeredAt: string;
 }
 
 // ── Mensajes ─────────────────────────────────────────────────────────────────
 
-export type RemitenteMensaje = 'AI' | 'USER';
+export type MessageSender = 'AI' | 'USER';
 
 /**
  * Mensaje normalizado para uso interno en el frontend.
  * Los campos "content/sender/associatedEmotion/createdAt" vienen del backend (MensajeResponse).
- * Mantenemos alias opcionales para el mensaje de bienvenida local.
  */
-export interface Mensaje {
+export interface Message {
   id: number;
   content: string;
-  sender: RemitenteMensaje;
-  associatedEmotion: TipoEmocion | null;
+  sender: MessageSender;
+  associatedEmotion: EmotionType | null;
   createdAt: string;
 }
 
 // ── Conversaciones ────────────────────────────────────────────────────────────
 
-/** ConversacionResponse del backend */
-export interface Conversacion {
+/** ConversationResponse del backend */
+export interface Conversation {
   id: number;
   userId: number;
   messageCount: number;
   createdAt: string;
   updatedAt: string;
   active: boolean;
-  tipo?: string; // 'TEXTO' | 'VIDEO'
+  type?: string; // 'TEXTO' | 'VIDEO'
 }
 
 // ── Intervenciones ────────────────────────────────────────────────────────────
 
-export interface Recomendacion {
+export interface Recommendation {
   id: number;
-  titulo: string;
-  descripcion: string;
-  estadoInicial: TipoEmocion;
-  prioridad: number;
+  title: string;
+  description: string;
+  initialState: EmotionType;
+  priority: number;
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export interface DashboardSummary {
-  totalConversaciones: number;
-  totalMensajes: number;
-  emocionMasFrecuente: TipoEmocion | null;
-  ultimaConversacionId: number | null;
+  userId: number;
+  activeConversations: number;
+  savedMemories: number;
+  emotionalTrend: number;
+  latestAlert: string;
 }
+
+// ── Aliases de Compatibilidad para Refactorización Progresiva ─────────────────
+export type Usuario = User;
+export type TipoEmocion = EmotionType;
+export type EmocionDetectada = DetectedEmotion;
+export type RemitenteMensaje = MessageSender;
+export type Mensaje = Message;
+export type Conversacion = Conversation;
+export type Recomendacion = Recommendation;

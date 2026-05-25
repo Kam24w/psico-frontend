@@ -1,14 +1,14 @@
 import axios from 'axios'
 import type {
   AuthPayload,
-  Conversacion,
+  Conversation,
   DashboardSummary,
   Emotion,
   LoginRequest,
-  Mensaje,
-  Recomendacion,
+  Message,
+  Recommendation,
   RegisterRequest,
-  TipoEmocion,
+  EmotionType,
 } from '../types/domain'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
@@ -59,81 +59,86 @@ export const authService = {
   register: (data: RegisterRequest) => api.post<AuthPayload>('/api/auth/register', data),
 }
 
-// ── Conversación ──────────────────────────────────────────────────────────────
-export const conversacionService = {
-  /** Envía un mensaje y recibe la respuesta de la IA (MensajeResponse) */
-  enviarMensaje: (usuarioId: number, contenido: string, emocion: TipoEmocion, tipoSesion: string = 'TEXTO') =>
-    api.post<Mensaje>('/api/conversations/message', {
-      usuarioId,
-      contenido,
-      emocion,
-      tipoSesion,
+// ── Conversation ──────────────────────────────────────────────────────────────
+export const conversationService = {
+  /** Envía un mensaje y recibe la respuesta de la IA (MessageResponse) */
+  sendMessage: (userId: number, content: string, emotion: EmotionType, sessionType: string = 'TEXTO') =>
+    api.post<Message>('/api/conversations/message', {
+      userId,
+      content,
+      emotion,
+      sessionType,
     }),
 
   /** Historial de mensajes de una conversación */
-  obtenerHistorial: (conversacionId: number) =>
-    api.get<Mensaje[]>(`/api/conversations/history/${conversacionId}`),
+  getHistory: (conversationId: number) =>
+    api.get<Message[]>(`/api/conversations/history/${conversationId}`),
 
   /** Historial de la sesión activa para el usuario actual (usando JWT), filtrado por tipo */
-  obtenerHistorialActivo: (tipoSesion: string = 'TEXTO') =>
-    api.get<Mensaje[]>('/api/conversations/active-history', { params: { tipoSesion } }),
+  getActiveHistory: (sessionType: string = 'TEXTO') =>
+    api.get<Message[]>('/api/conversations/active-history', { params: { sessionType } }),
 
   /** Lista de conversaciones de un usuario */
-  obtenerConversaciones: (usuarioId: number) =>
-    api.get<Conversacion[]>(`/api/conversations/user/${usuarioId}`),
+  getConversations: (userId: number) =>
+    api.get<Conversation[]>(`/api/conversations/user/${userId}`),
 
   /** Inicia una sesión de voz con un saludo de la IA */
-  iniciarConversacion: (emocion: TipoEmocion, tipo: string = 'VIDEO') =>
-    api.post<Mensaje>('/api/conversations/initiate', { emotion: emocion, tipo }),
+  initiateConversation: (emotion: EmotionType, type: string = 'VIDEO') =>
+    api.post<Message>('/api/conversations/initiate', { emotion, tipo: type }),
 
   /** Cierra la sesión activa actual para empezar una nueva */
-  cerrarSesionActiva: (userId: number, tipoSesion: string = 'TEXTO') =>
-    api.post<void>('/api/conversations/active/close', null, { params: { userId, tipoSesion } }),
+  closeActiveSession: (userId: number, sessionType: string = 'TEXTO') =>
+    api.post<void>('/api/conversations/active/close', null, { params: { userId, sessionType } }),
 
   /** Elimina permanentemente una sesión del historial */
-  eliminarSesion: (conversationId: number) =>
+  deleteSession: (conversationId: number) =>
     api.delete<void>(`/api/conversations/${conversationId}`),
 
   /** Obtiene los mensajes de una sesión pasada por su ID */
-  obtenerMensajesSesion: (conversationId: number) =>
-    api.get<Mensaje[]>(`/api/conversations/history/${conversationId}`),
+  getSessionMessages: (conversationId: number) =>
+    api.get<Message[]>(`/api/conversations/history/${conversationId}`),
 }
 
-// ── Emoción ───────────────────────────────────────────────────────────────────
-export const emocionService = {
+// ── Emotion ───────────────────────────────────────────────────────────────────
+export const emotionService = {
   /** Registra una emoción detectada */
-  registrar: (usuarioId: number, tipo: TipoEmocion, intensidad: number) =>
-    api.post<Emotion>('/api/emotions', { usuarioId, tipo, intensidad }),
+  register: (userId: number, type: EmotionType, intensity: number) =>
+    api.post<Emotion>('/api/emotions', { userId, emotionType: type, intensity }),
 
   /** Última emoción registrada por el usuario */
-  obtenerUltima: (usuarioId: number) =>
-    api.get<TipoEmocion>(`/api/emotions/latest/${usuarioId}`),
+  getLatest: (userId: number) =>
+    api.get<EmotionType>(`/api/emotions/latest/${userId}`),
 
   /** Historial completo de emociones */
-  obtenerHistorial: (usuarioId: number) =>
-    api.get<Emotion[]>(`/api/emotions/history/${usuarioId}`),
+  getHistory: (userId: number) =>
+    api.get<Emotion[]>(`/api/emotions/history/${userId}`),
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export const dashboardService = {
   /** Resumen general del usuario (DashboardController → /api/dashboard/{id}) */
-  obtenerResumen: (usuarioId: number) =>
-    api.get<DashboardSummary>(`/api/dashboard/${usuarioId}`),
+  getSummary: (userId: number) =>
+    api.get<DashboardSummary>(`/api/dashboard/${userId}`),
 
-  /** Estadísticas detalladas (StatisticsController → /api/estadisticas/{id}) */
-  obtenerEstadisticas: (usuarioId: number) =>
-    api.get<DashboardSummary>(`/api/estadisticas/${usuarioId}`),
+  /** Estadísticas detalladas (StatisticsController → /api/statistics/{id}) */
+  getStatistics: (userId: number) =>
+    api.get<DashboardSummary>(`/api/statistics/${userId}`),
 }
 
-// ── Intervenciones ────────────────────────────────────────────────────────────
-export const intervencionService = {
-  /** Recomendaciones por emoción (InterventionController → /api/intervencion/{emocion}) */
-  obtenerRecomendaciones: (emocion: TipoEmocion) =>
-    api.get<Recomendacion[]>(`/api/intervencion/${emocion}`),
+// ── Intervention ────────────────────────────────────────────────────────────
+export const interventionService = {
+  /** Recomendaciones por emoción */
+  getRecommendations: (emotion: EmotionType) =>
+    api.get<Recommendation[]>(`/api/intervention/${emotion}`),
 
-  /** Ejercicios terapéuticos (TherapeuticController → /api/terapia/ejercicios?emocion=) */
-  sugerirEjercicios: (emocion: TipoEmocion) =>
-    api.get<Recomendacion[]>('/api/terapia/ejercicios', { params: { emocion } }),
+  /** Ejercicios terapéuticos */
+  suggestExercises: (emotion: EmotionType) =>
+    api.get<Recommendation[]>('/api/therapy/exercises', { params: { emotion } }),
 }
+
+// ── Aliases de Compatibilidad ─────────────────────────────────────────────────
+export const conversacionService = conversationService;
+export const emocionService = emotionService;
+export const intervencionService = interventionService;
 
 export default api

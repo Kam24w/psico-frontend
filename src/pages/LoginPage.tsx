@@ -43,6 +43,12 @@ export default function LoginPage() {
       <div className="global-blob-3" />
 
       <div className="auth-card">
+        <div className="auth-brand">
+          <div className="auth-brand-title-container">
+            <img src="/Logo.png" alt="MindSee Logo" className="auth-brand-logo-only" />
+            <h1 className="auth-brand-name">MindSee</h1>
+          </div>
+        </div>
 
         <div className="auth-header">
           <h1 className="auth-title">Bienvenido de vuelta</h1>
@@ -59,6 +65,7 @@ export default function LoginPage() {
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })}
               required
+              maxLength={30}
             />
           </div>
           <div className="auth-field">
@@ -70,6 +77,7 @@ export default function LoginPage() {
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
               required
+              maxLength={20}
             />
           </div>
           {error && <p className="auth-error">{error}</p>}
@@ -78,9 +86,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="auth-link-text">
+        <p className="auth-footer">
           ¿No tienes cuenta?{' '}
-          <Link to="/register" className="auth-link-action">Regístrate aquí</Link>
+          <Link to="/register" className="auth-link">Regístrate aquí</Link>
         </p>
       </div>
 

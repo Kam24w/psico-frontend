@@ -2,69 +2,82 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useEmotionDetector } from '../hooks/useEmotionDetector'
-import { conversacionService } from '../services/api'
-import type { TipoEmocion } from '../types/domain'
+import { conversationService } from '../services/api'
+import type { EmotionType } from '../types/domain'
 
 type ConversationMode = 'push-to-talk' | 'free'
+type AiStatus = 'waiting' | 'thinking' | 'speaking'
+
+const EMOTION_LABELS_ES: Record<string, string> = {
+  HAPPY: 'FELIZ',
+  SAD: 'TRISTE',
+  STRESSED: 'ESTRESADO',
+  ANGRY: 'ENOJADO',
+  ANXIOUS: 'ANSIOSO',
+  SURPRISED: 'SORPRENDIDO',
+  NEUTRAL: 'NEUTRAL',
+}
 
 export default function CallPage() {
   const navigate = useNavigate()
-  const { usuario } = useAuth()
+  const { user } = useAuth()
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  // ── Emotion Detection Hook (NO TOCAR — funciona bien) ─────────────────────
-  const { emocionActual, modelosCargados, errorCamara } = useEmotionDetector(videoRef)
+  // ── Emotion Detection Hook ─────────────────────
+  const { currentEmotion, modelsLoaded, cameraError } = useEmotionDetector(videoRef)
 
-  // ── Estados de UI ─────────────────────────────────────────────────────────
+  // ── UI States ─────────────────────────────────────────────────────────
   const [isMuted, setIsMuted] = useState(false)
   const [isCameraOff, setIsCameraOff] = useState(false)
-  const [aiStatus, setAiStatus] = useState<'esperando' | 'pensando' | 'hablando'>('esperando')
+  const [aiStatus, setAiStatus] = useState<AiStatus>('waiting')
   const [lastAiMessage, setLastAiMessage] = useState('')
   const [sessionStarted, setSessionStarted] = useState(false)
   const [conversationMode, setConversationMode] = useState<ConversationMode>('free')
   const [isListening, setIsListening] = useState(false)
 
-  // ── Refs de lifecycle del componente ──────────────────────────────────────
+  // ── Lifecyle Refs ──────────────────────────────────────
   const isMountedRef   = useRef(true)
   const hasInitiatedRef = useRef(false)
   const emotionTimeoutRef = useRef<any>(null)
 
-  // ── FUENTE ÚNICA DE VERDAD: guardias internas de estado de voz ────────────
-  // Se usan useRef (no useState) porque son guardias internas que NO necesitan
-  // disparar re-renders. Su único rol es prevenir race conditions.
+  // ── Voice guards and controls (useRef to prevent race conditions) ────────────
   const recognitionRef  = useRef<any>(null)
-  const isListeningRef  = useRef(false)   // ¿SpeechRecognition está activo AHORA MISMO?
-  const isProcessingRef = useRef(false)   // ¿Hay una petición al backend en vuelo?
-  const isMutedRef      = useRef(false)   // Espejo ref de isMuted para closures sin stale state
+  const isListeningRef  = useRef(false)   // Is SpeechRecognition active right now?
+  const isProcessingRef = useRef(false)   // Is there a backend request in flight?
+  const isMutedRef      = useRef(false)   // Ref mirror of isMuted to prevent stale closures
   const conversationModeRef = useRef<ConversationMode>('free')
 
   const accumulatedTextRef = useRef('')
 
-  // Sincronizar isMutedRef con el estado React
+  // Sync isMutedRef with state
   useEffect(() => {
     isMutedRef.current = isMuted
   }, [isMuted])
 
-  // Sincronizar conversationModeRef con el estado React
+  // Sync conversationModeRef with state
   useEffect(() => {
     conversationModeRef.current = conversationMode
   }, [conversationMode])
 
   useEffect(() => {
     isMountedRef.current = true
-    return () => { isMountedRef.current = false }
+    return () => {
+      isMountedRef.current = false
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+    }
   }, [])
 
-  // ── CONTROL CENTRALIZADO: único punto que puede encender el micrófono ─────
+  // ── startListening ─────
   const startListening = useCallback(() => {
-    if (!recognitionRef.current)       { console.log('[VOZ] MIC_BLOCKED: no hay instancia de recognition'); return }
+    if (!recognitionRef.current)       { console.log('[VOZ] MIC_BLOCKED: no recognition instance'); return }
     if (isMutedRef.current)            { console.log('[VOZ] MIC_BLOCKED_MUTED'); return }
-    if (isListeningRef.current)        { console.log('[VOZ] MIC_ALREADY_ACTIVE: evitando doble start()'); return }
-    if (isProcessingRef.current)       { console.log('[VOZ] MIC_BLOCKED_PROCESSING: backend request en vuelo'); return }
-    if (!isMountedRef.current)         { console.log('[VOZ] MIC_BLOCKED: componente desmontado'); return }
+    if (isListeningRef.current)        { console.log('[VOZ] MIC_ALREADY_ACTIVE: preventing double start()'); return }
+    if (isProcessingRef.current)       { console.log('[VOZ] MIC_BLOCKED_PROCESSING: backend request in flight'); return }
+    if (!isMountedRef.current)         { console.log('[VOZ] MIC_BLOCKED: component unmounted'); return }
 
     try {
-      // PTT = continuous true para que no se corte al pausar de hablar
       recognitionRef.current.continuous = conversationModeRef.current === 'push-to-talk'
       accumulatedTextRef.current = '' // Reset
       recognitionRef.current.start()
@@ -78,12 +91,10 @@ export default function CallPage() {
     }
   }, [])
 
-  // ── CONTROL CENTRALIZADO: único punto que puede apagar el micrófono ───────
+  // ── stopListening ───────
   const stopListening = useCallback(() => {
     if (!recognitionRef.current || !isListeningRef.current) return
     try {
-      // Al llamar a stop(), el navegador finalizará el audio actual,
-      // disparará onresult (si hubo voz) y finalmente onend.
       recognitionRef.current.stop()
       console.log('[VOZ] MIC_STOP_REQUESTED')
     } catch (e: any) {
@@ -95,15 +106,15 @@ export default function CallPage() {
   const speak = useCallback((text: string) => {
     if (!text || !isMountedRef.current) return
 
-    // Apagar mic ANTES de que la IA hable — evita que se escuche a sí misma
+    // Turn off microphone BEFORE AI speaks to avoid listening to itself
     stopListening()
 
-    setAiStatus('hablando')
+    setAiStatus('speaking')
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = 'es-ES'
     utterance.rate = 0.95
 
-    // Selección de voz en español
+    // Spanish voice selection
     const voices = window.speechSynthesis.getVoices()
     const spanishVoice = voices.find(v => v.lang.startsWith('es'))
     if (spanishVoice) {
@@ -117,28 +128,27 @@ export default function CallPage() {
     utterance.onend = () => {
       console.log('[VOZ] AI_FINISHED_SPEAKING')
       if (!isMountedRef.current) return
-      setAiStatus('esperando')
+      setAiStatus('waiting')
       if (conversationModeRef.current === 'free') {
-        console.log('[VOZ] FREE_MODE_WAITING: mic se activará en 600ms')
+        console.log('[VOZ] FREE_MODE_WAITING: mic activating in 600ms')
         setTimeout(() => {
           if (conversationModeRef.current === 'free') {
             startListening()
           }
         }, 600)
       } else {
-        console.log('[VOZ] PUSH_TO_TALK_WAITING: esperando pulsación manual')
+        console.log('[VOZ] PUSH_TO_TALK_WAITING: waiting for manual press')
       }
     }
 
     utterance.onerror = (e: any) => {
       if (e.error === 'interrupted') {
-        // Artefacto normal de lifecycle cuando el componente se desmonta mientras habla
-        console.warn('[VOZ] SPEECH_INTERRUPTED (lifecycle artifact)')
+        console.warn('[VOZ] SPEECH_INTERRUPTED')
         return
       }
       console.error('[VOZ] SPEECH_ERROR:', e.error)
       if (isMountedRef.current) {
-        setAiStatus('esperando')
+        setAiStatus('waiting')
         if (conversationModeRef.current === 'free') {
           setTimeout(() => {
             if (conversationModeRef.current === 'free') {
@@ -146,7 +156,7 @@ export default function CallPage() {
             }
           }, 600)
         } else {
-          console.log('[VOZ] PUSH_TO_TALK_WAITING (after TTS error): esperando pulsación manual')
+          console.log('[VOZ] PUSH_TO_TALK_WAITING')
         }
       }
     }
@@ -155,62 +165,58 @@ export default function CallPage() {
     window.speechSynthesis.speak(utterance)
   }, [stopListening, startListening])
 
-  // ── STT: procesamiento de lo que dijo el usuario ──────────────────────────
+  // ── STT: Process user voice input ──────────────────────────
   const processVoiceInput = useCallback(async (text: string) => {
     if (!text.trim()) return
 
     isProcessingRef.current = true
-    setAiStatus('pensando')
+    setAiStatus('thinking')
     console.log('[VOZ] PROCESSING_USER_INPUT:', text)
 
     try {
-      // ÚNICO request a backend — sin duplicados, sin Groq directo
-      const response = await conversacionService.enviarMensaje(
-        usuario.id,
+      const response = await conversationService.sendMessage(
+        user.id,
         text,
-        emocionActual.tipo || 'NEUTRAL',
+        currentEmotion.type || 'NEUTRAL',
         'VIDEO'
       )
       const data = (response as any).data || response
-      const respuesta = data.content || data.cleaned || (typeof data === 'string' ? data : 'Error procesando respuesta')
+      const reply = data.content || data.cleaned || (typeof data === 'string' ? data : 'Error procesando respuesta')
 
-      console.log('[VOZ] AI_RESPONSE_RECEIVED:', respuesta.substring(0, 50) + '...')
-      setLastAiMessage(respuesta)
-      // speak() apagará el mic y lo reactivará cuando termine
-      speak(respuesta)
+      console.log('[VOZ] AI_RESPONSE_RECEIVED:', reply.substring(0, 50) + '...')
+      setLastAiMessage(reply)
+      speak(reply)
     } catch (err) {
       console.error('[VOZ] BACKEND_ERROR:', err)
-      setAiStatus('esperando')
-      // Reactivar mic incluso si hubo error (sólo en modo libre)
+      setAiStatus('waiting')
       if (conversationModeRef.current === 'free') {
         startListening()
       }
     } finally {
       isProcessingRef.current = false
     }
-  }, [emocionActual, speak, startListening, usuario?.id])
+  }, [currentEmotion, speak, startListening, user?.id])
 
-  // ── Saludo inicial de la IA ────────────────────────────────────────────────
-  const initiateAI = useCallback(async (detectedEmotion: TipoEmocion) => {
+  // ── AI Greeting ────────────────────────────────────────────────
+  const initiateAI = useCallback(async (detectedEmotion: EmotionType) => {
     if (hasInitiatedRef.current) return
     hasInitiatedRef.current = true
 
-    setAiStatus('pensando')
+    setAiStatus('thinking')
     console.log('[VOZ] SESSION_INITIATED with emotion:', detectedEmotion)
 
     try {
-      const response = await conversacionService.iniciarConversacion(detectedEmotion, 'VIDEO')
+      const response = await conversationService.initiateConversation(detectedEmotion, 'VIDEO')
       const data = (response as any).data || response
-      const saludo = data.content || data.cleaned || (typeof data === 'string' ? data : 'Hola, ¿cómo te sientes?')
+      const greeting = data.content || data.cleaned || (typeof data === 'string' ? data : 'Hola, ¿cómo te sientes?')
 
-      console.log('[VOZ] GREETING_RECEIVED:', saludo.substring(0, 50) + '...')
-      setLastAiMessage(saludo)
-      speak(saludo)
+      console.log('[VOZ] GREETING_RECEIVED:', greeting.substring(0, 50) + '...')
+      setLastAiMessage(greeting)
+      speak(greeting)
     } catch (err) {
       console.error('[VOZ] GREETING_ERROR:', err)
       if (isMountedRef.current) {
-        setAiStatus('esperando')
-        // Si falló el saludo, encender mic para que el usuario pueda hablar igual (sólo en modo libre)
+        setAiStatus('waiting')
         if (conversationModeRef.current === 'free') {
           startListening()
         }
@@ -218,14 +224,11 @@ export default function CallPage() {
     }
   }, [speak, startListening])
 
-  // ── Inicialización del SpeechRecognition — UNA SOLA VEZ ──────────────────
-  // Deps vacías [] = se crea una sola instancia durante toda la vida del componente.
-  // Esto evita que los listeners se dupliquen y que el objeto se destruya/recree
-  // con cada cambio de estado, que era uno de los problemas raíz del código anterior.
+  // ── Initialize SpeechRecognition ──────────────────
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognition) {
-      console.warn('[VOZ] SpeechRecognition no está soportado en este navegador')
+      console.warn('[VOZ] SpeechRecognition not supported in this browser')
       return
     }
 
@@ -237,7 +240,8 @@ export default function CallPage() {
     recognition.onstart = () => {
       isListeningRef.current = true
       setIsListening(true)
-      console.log('[VOZ] MIC_STARTED (confirmed by onstart)')
+      ;(recognitionRef.current as any)._networkRetries = 0
+      console.log('[VOZ] MIC_STARTED')
     }
 
     recognition.onresult = (event: any) => {
@@ -254,26 +258,22 @@ export default function CallPage() {
       if (conversationModeRef.current === 'free') {
         console.log('[VOZ] USER_SAID (Free):', currentTranscript)
         try { recognition.stop() } catch (e) {}
-        // En modo libre, procesamos inmediatamente y dejamos que stop() desencadene onend
         processVoiceInput(currentTranscript)
       } else {
-        // En modo PTT, acumulamos el texto y no interrumpimos la grabación.
         accumulatedTextRef.current += currentTranscript + ' '
         console.log('[VOZ] ACCUMULATING (PTT):', accumulatedTextRef.current)
       }
     }
 
     recognition.onerror = (event: any) => {
-      // 'aborted' es normal — ocurre cuando nosotros llamamos stop() explícitamente
       if (event.error === 'aborted') {
-        console.log('[VOZ] MIC_ABORTED (controlled stop — OK)')
+        console.log('[VOZ] MIC_ABORTED')
         isListeningRef.current = false
         setIsListening(false)
         return
       }
-      // 'no-speech': el usuario no habló.
       if (event.error === 'no-speech') {
-        console.log('[VOZ] MIC_NO_SPEECH (silence detected — waiting)')
+        console.log('[VOZ] MIC_NO_SPEECH')
         isListeningRef.current = false
         setIsListening(false)
         return
@@ -283,30 +283,36 @@ export default function CallPage() {
       isListeningRef.current = false
       setIsListening(false)
 
-      // Fallback para error de red: Chrome a veces lanza 'network' sin razón o por saturación.
       if (event.error === 'network' && conversationModeRef.current === 'free' && isMountedRef.current && !isMutedRef.current && !isProcessingRef.current) {
-        console.log('[VOZ] Retrying after network error in 1.5s...')
-        setTimeout(() => {
-          if (conversationModeRef.current === 'free' && !isListeningRef.current && !isMutedRef.current && !isProcessingRef.current) {
-            startListening()
-          }
-        }, 1500)
+        const currentRetries = (recognitionRef.current as any)._networkRetries || 0
+        
+        if (currentRetries < 2) {
+          ;(recognitionRef.current as any)._networkRetries = currentRetries + 1
+          console.log(`[VOZ] Retrying after network error (${currentRetries + 1}/2)...`)
+          setTimeout(() => {
+            if (conversationModeRef.current === 'free' && !isListeningRef.current && !isMutedRef.current && !isProcessingRef.current) {
+              startListening()
+            }
+          }, 1500)
+        } else {
+          console.error('[VOZ] Permanent network error.')
+          alert('Tu navegador está bloqueando la conexión al servidor de voz. Por favor usa Google Chrome, desactiva bloqueadores de anuncios o usa el Chat de Texto.')
+        }
       }
     }
 
     recognition.onend = () => {
       isListeningRef.current = false
       setIsListening(false)
-      console.log('[VOZ] MIC_STOPPED (recognition ended)')
+      console.log('[VOZ] MIC_STOPPED')
       
-      // En modo PTT, cuando el mic se apaga de verdad, enviamos lo que hayamos acumulado.
       if (conversationModeRef.current === 'push-to-talk') {
          const finalTxt = accumulatedTextRef.current.trim()
          if (finalTxt && !isProcessingRef.current) {
            console.log('[VOZ] SENDING ACCUMULATED PTT TEXT:', finalTxt)
            processVoiceInput(finalTxt)
          }
-         accumulatedTextRef.current = '' // Limpiar buffer
+         accumulatedTextRef.current = ''
       }
     }
 
@@ -320,12 +326,12 @@ export default function CallPage() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // ← INTENCIONALMENTE VACÍO: una sola instancia por montaje
+  }, [])
 
-  // ── Lógica de inicio: espera a que el usuario haga clic ───────────────────
+  // ── Session initiation waiting logic ───────────────────
   useEffect(() => {
     if (!sessionStarted) return
-    if (modelosCargados && !hasInitiatedRef.current) {
+    if (modelsLoaded && !hasInitiatedRef.current) {
       emotionTimeoutRef.current = setTimeout(() => {
         console.log('[VOZ] EMOTION_TIMEOUT: using NEUTRAL as fallback')
         initiateAI('NEUTRAL')
@@ -334,30 +340,27 @@ export default function CallPage() {
     return () => {
       if (emotionTimeoutRef.current) clearTimeout(emotionTimeoutRef.current)
     }
-  }, [sessionStarted, modelosCargados, initiateAI])
+  }, [sessionStarted, modelsLoaded, initiateAI])
 
-  // ── Si detectamos emoción real antes del timeout, usarla ──────────────────
+  // ── Emotion detection callback ──────────────────
   useEffect(() => {
     if (!sessionStarted) return
-    if (emocionActual.tipo !== 'NEUTRAL' && !hasInitiatedRef.current && modelosCargados) {
+    if (currentEmotion.type !== 'NEUTRAL' && !hasInitiatedRef.current && modelsLoaded) {
       if (emotionTimeoutRef.current) clearTimeout(emotionTimeoutRef.current)
-      initiateAI(emocionActual.tipo)
+      initiateAI(currentEmotion.type)
     }
-  }, [sessionStarted, emocionActual, initiateAI, modelosCargados])
+  }, [sessionStarted, currentEmotion, initiateAI, modelsLoaded])
 
-  // ── Botón Mute ────────────────────────────────────────────────────────────
+  // ── Mute Button ────────────────────────────────────────────────────────────
   const toggleMute = () => {
     if (!isMuted) {
-      // MUTEAR: apagar el micrófono y prevenir cualquier reactivación
       stopListening()
       setIsMuted(true)
       console.log('[VOZ] SESSION_MUTED')
     } else {
-      // DESMUTEAR: solo activar el mic si la IA no está hablando ni procesando, y en modo libre
       setIsMuted(false)
       console.log('[VOZ] SESSION_UNMUTED')
-      if (aiStatus === 'esperando' && !isProcessingRef.current && conversationModeRef.current === 'free') {
-        // Pequeño delay para que isMutedRef.current se actualice via el useEffect
+      if (aiStatus === 'waiting' && !isProcessingRef.current && conversationModeRef.current === 'free') {
         setTimeout(() => startListening(), 50)
       }
     }
@@ -365,12 +368,15 @@ export default function CallPage() {
 
   const endCall = () => {
     stopListening()
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
     navigate('/chat')
   }
 
   const getHeaderSubtitle = () => {
-    if (aiStatus === 'hablando') return 'La IA está hablando...'
-    if (aiStatus === 'pensando') return 'Procesando tu respuesta...'
+    if (aiStatus === 'speaking') return 'La IA está hablando...'
+    if (aiStatus === 'thinking') return 'Procesando tu respuesta...'
     if (isMuted) return 'Micrófono silenciado'
     
     if (conversationMode === 'free') {
@@ -385,7 +391,7 @@ export default function CallPage() {
       {!sessionStarted && (
         <div className="session-start-overlay">
           <div className="session-start-card">
-            <div className="session-start-icon">🧠</div>
+            <img src="/Logo.png" alt="MindSee Logo" className="session-start-logo" />
             <h2>¿Listo para empezar?</h2>
             <p>Selecciona tu modo de interacción preferido para comenzar la sesión.</p>
             
@@ -422,7 +428,7 @@ export default function CallPage() {
             <button className="session-start-btn" onClick={() => {
               setSessionStarted(true)
               setTimeout(() => {
-                if (modelosCargados) initiateAI(emocionActual.tipo)
+                if (modelsLoaded) initiateAI(currentEmotion.type)
               }, 100)
             }}>
               Comenzar Sesión 📞
@@ -441,7 +447,7 @@ export default function CallPage() {
         </p>
       </div>
 
-      <div className={`call-video-wrapper ${aiStatus === 'hablando' ? 'pulsing-aura' : ''}`}>
+      <div className={`call-video-wrapper ${aiStatus === 'speaking' ? 'pulsing-aura' : ''}`}>
         {isCameraOff ? (
           <div className="call-video-off-placeholder">
             <span className="call-video-off-icon">👤</span>
@@ -457,88 +463,90 @@ export default function CallPage() {
         )}
 
         <div className="call-emotion-badge">
-          {emocionActual.tipo}
+          {EMOTION_LABELS_ES[currentEmotion.type] || currentEmotion.type}
         </div>
       </div>
 
-      <div className="call-action-area">
-        {lastAiMessage && (
-          <div className="call-ai-subtitle">
-            "{lastAiMessage}"
-          </div>
-        )}
+      <div className="call-controls-wrapper">
+        <div className="call-action-area">
+          {lastAiMessage && (
+            <div className="call-ai-subtitle">
+              "{lastAiMessage}"
+            </div>
+          )}
 
-        {conversationMode === 'push-to-talk' && sessionStarted && (
-          <div className="call-ptt-container">
-            <button
-              className={`call-ptt-btn ${isListening ? 'listening' : ''} ${(aiStatus !== 'esperando' || isMuted) ? 'disabled' : ''}`}
-              onClick={() => {
-                if (aiStatus !== 'esperando' || isMuted) return
-                if (isListening) {
-                  stopListening()
-                } else {
+          {conversationMode === 'push-to-talk' && sessionStarted && (
+            <div className="call-ptt-container">
+              <button
+                className={`call-ptt-btn ${isListening ? 'listening' : ''} ${(aiStatus !== 'waiting' || isMuted) ? 'disabled' : ''}`}
+                onClick={() => {
+                  if (aiStatus !== 'waiting' || isMuted) return
+                  if (isListening) {
+                    stopListening()
+                  } else {
+                    startListening()
+                  }
+                }}
+                disabled={aiStatus !== 'waiting' || isMuted}
+              >
+                <span className="ptt-icon">🎤</span>
+                <span className="ptt-text">
+                  {isListening ? 'Escuchando... Pulsa para enviar' : 'Presiona para Hablar'}
+                </span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="call-dock">
+          <button
+            className={`call-dock-btn ${isMuted ? 'muted' : ''}`}
+            onClick={toggleMute}
+            title={isMuted ? "Activar micrófono" : "Silenciar micrófono"}
+          >
+            <span className="btn-icon">{isMuted ? '🔇' : '🎙️'}</span>
+          </button>
+
+          <button
+            className={`call-dock-btn secondary-action ${conversationMode === 'free' ? 'active-mode' : ''}`}
+            onClick={() => {
+              const newMode = conversationMode === 'free' ? 'push-to-talk' : 'free'
+              setConversationMode(newMode)
+              conversationModeRef.current = newMode
+              console.log(`[VOZ] MODE_CHANGED: ${newMode}`)
+              
+              if (newMode === 'push-to-talk') {
+                stopListening()
+              } else {
+                if (aiStatus === 'waiting' && !isProcessingRef.current) {
                   startListening()
                 }
-              }}
-              disabled={aiStatus !== 'esperando' || isMuted}
-            >
-              <span className="ptt-icon">🎤</span>
-              <span className="ptt-text">
-                {isListening ? 'Escuchando... Pulsa para enviar' : 'Presiona para Hablar'}
-              </span>
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="call-dock">
-        <button
-          className={`call-dock-btn ${isMuted ? 'muted' : ''}`}
-          onClick={toggleMute}
-          title={isMuted ? "Activar micrófono" : "Silenciar micrófono"}
-        >
-          <span className="btn-icon">{isMuted ? '🔇' : '🎙️'}</span>
-        </button>
-
-        <button
-          className={`call-dock-btn secondary-action ${conversationMode === 'free' ? 'active-mode' : ''}`}
-          onClick={() => {
-            const newMode = conversationMode === 'free' ? 'push-to-talk' : 'free'
-            setConversationMode(newMode)
-            conversationModeRef.current = newMode
-            console.log(`[VOZ] MODE_CHANGED: ${newMode}`)
-            
-            if (newMode === 'push-to-talk') {
-              stopListening()
-            } else {
-              if (aiStatus === 'esperando' && !isProcessingRef.current) {
-                startListening()
               }
-            }
-          }}
-          title={conversationMode === 'free' ? "Cambiar a modo Push-To-Talk" : "Cambiar a modo Conversación Libre"}
-        >
-          <span className="btn-icon">{conversationMode === 'free' ? '🗣️' : '🎤'}</span>
-          <span className="btn-text">
-            {conversationMode === 'free' ? 'Modo Libre' : 'Modo PTT'}
-          </span>
-        </button>
+            }}
+            title={conversationMode === 'free' ? "Cambiar a modo Push-To-Talk" : "Cambiar a modo Conversación Libre"}
+          >
+            <span className="btn-icon">{conversationMode === 'free' ? '🗣️' : '🎤'}</span>
+            <span className="btn-text">
+              {conversationMode === 'free' ? 'Modo Libre' : 'Modo PTT'}
+            </span>
+          </button>
 
-        <button
-          className="call-dock-btn secondary-action"
-          onClick={() => navigate('/chat')}
-        >
-          <span className="btn-icon">💬</span>
-          <span className="btn-text">Chat de Texto</span>
-        </button>
+          <button
+            className="call-dock-btn secondary-action"
+            onClick={() => navigate('/chat')}
+          >
+            <span className="btn-icon">💬</span>
+            <span className="btn-text">Chat de Texto</span>
+          </button>
 
-        <button
-          className="call-dock-btn end-call"
-          onClick={endCall}
-        >
-          <span className="btn-icon">✖</span>
-          <span className="btn-text">Finalizar</span>
-        </button>
+          <button
+            className="call-dock-btn end-call"
+            onClick={endCall}
+          >
+            <span className="btn-icon">✖</span>
+            <span className="btn-text">Finalizar</span>
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -3,7 +3,7 @@ export const UI_TEXTS = {
     loading: 'Cargando...',
   },
   auth: {
-    appName: 'Psicólogo Virtual',
+    appName: 'MindSee',
     login: {
       subtitle: 'Tu espacio seguro para hablar',
       emailPlaceholder: 'Correo electrónico',
@@ -28,14 +28,14 @@ export const UI_TEXTS = {
     },
   },
   chatPage: {
-    navbarTitle: 'Psicólogo Virtual',
+    navbarTitle: 'MindSee',
     userPrefix: 'Usuario',
     logout: 'Salir',
     tipTitle: '¿Cómo funciona?',
     tipDescription: 'La cámara detecta tu emoción y yo adapto mis respuestas para acompañarte mejor.',
   },
   chatWindow: {
-    title: 'Psicólogo Virtual',
+    title: 'MindSee',
     online: 'En línea',
     welcomeMessage: (userName?: string) =>
       `¡Hola, ${userName || 'usuario'}! Soy tu acompañante emocional. Estoy aquí para escucharte. ¿Cómo te sientes hoy?`,
