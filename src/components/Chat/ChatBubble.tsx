@@ -31,9 +31,13 @@ export default function ChatBubble({ mensaje }: { mensaje: Mensaje }) {
       className={`light-bubble-row ${esIA ? 'light-bubble-row-ai' : 'light-bubble-row-user'}`}
     >
       {esIA && (
-        <div className="light-avatar light-avatar-ai" aria-label="Psicólogo">
-          IA
-        </div>
+        <img
+          className="light-avatar light-avatar-ai"
+          src="/Logo.png"
+          alt="MindSee"
+          aria-label="Psicólogo"
+          style={{ objectFit: 'cover' }}
+        />
       )}
 
       <div className={`light-bubble-content-wrapper ${esIA ? 'wrapper-ai' : 'wrapper-user'}`}>

@@ -252,9 +252,14 @@ export default function ChatWindow({ currentEmotion, emocionActual }: ChatWindow
       {/* Header Light */}
       <header className="light-cw-header">
         <div className="light-cw-header-left">
-          <div className="light-cw-avatar-circle">IA</div>
+          <img
+            className="light-cw-avatar-circle"
+            src="/Logo.png"
+            alt="MindSee"
+            style={{ objectFit: 'cover', border: '1px solid rgba(0,0,0,0.05)' }}
+          />
           <div className="light-cw-header-info">
-            <h2>Psicólogo Virtual</h2>
+            <h2>MindSee</h2>
             <p><span className="status-dot-green"></span> En línea · Sesión activa</p>
           </div>
         </div>
@@ -285,7 +290,12 @@ export default function ChatWindow({ currentEmotion, emocionActual }: ChatWindow
 
         {loading && (
           <div className="light-typing-indicator">
-            <div className="light-avatar light-avatar-ai">IA</div>
+            <img
+              className="light-avatar light-avatar-ai"
+              src="/Logo.png"
+              alt="MindSee"
+              style={{ objectFit: 'cover' }}
+            />
             <div className="light-typing-bubble">
               <span></span><span></span><span></span>
             </div>

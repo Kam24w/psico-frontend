@@ -46,6 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     localStorage.removeItem('psico_token')
     localStorage.removeItem('psico_usuario')
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
   }
 
   return (

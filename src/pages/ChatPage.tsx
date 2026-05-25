@@ -62,9 +62,9 @@ export default function ChatPage() {
       {/* Sidebar Oscuro */}
       <aside className="chat-sidebar-dark">
         <div className="sidebar-brand">
-          <div className="sidebar-brand-icon">🧠</div>
+          <img src="/Logo.png" alt="MindSee Logo" className="sidebar-brand-logo-img" />
           <div className="sidebar-brand-text">
-            <h1>Psicólogo Virtual</h1>
+            <h1>MindSee</h1>
             <p>APOYO EMOCIONAL 24/7</p>
           </div>
         </div>
@@ -75,7 +75,7 @@ export default function ChatPage() {
           </div>
 
           <div className="sidebar-therapist-info">
-            <h2>Psicólogo Virtual</h2>
+            <h2>MindSee</h2>
             <p>IA de Apoyo Psicológico 24/7</p>
           </div>
 
