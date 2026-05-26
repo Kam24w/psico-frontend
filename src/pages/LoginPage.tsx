@@ -25,10 +25,12 @@ export default function LoginPage() {
       navigate('/call')
     } catch (err) {
       const apiError = err as ApiError
+      const isNetworkError = (err as any).message === 'Network Error' || !(err as any).response;
+      
       setError(
-        apiError.response?.data?.message ||
-        apiError.response?.data?.error ||
-        'Credenciales incorrectas. Intenta de nuevo.'
+        isNetworkError 
+          ? 'Error de conexión. ¿Está el servidor encendido o VITE_API_URL bien configurada?'
+          : apiError.response?.data?.message || apiError.response?.data?.error || 'Credenciales incorrectas. Intenta de nuevo.'
       )
     } finally {
       setLoading(false)

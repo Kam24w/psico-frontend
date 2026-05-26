@@ -28,7 +28,7 @@ const mapEmotion = (expressions: Record<string, number>): DetectedEmotion => {
   }
 }
 
-export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
+export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>, shouldStart: boolean = true) {
   const [modelsLoaded, setModelsLoaded] = useState(false)
   const [currentEmotion, setCurrentEmotion]     = useState<DetectedEmotion>({ type: 'NEUTRAL', intensity: 0, raw: 'neutral' })
   const [cameraError, setCameraError]         = useState<string | null>(null)
@@ -45,6 +45,8 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
 
   // Load face-api.js models
   useEffect(() => {
+    if (!shouldStart) return;
+
     const loadModels = async () => {
       try {
         console.log("Initializing face-api and TF...");
@@ -87,7 +89,7 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
       }
     }
     loadModels()
-  }, [])
+  }, [shouldStart])
 
   // Continuously detect emotion safely
   const startDetection = useCallback(() => {
@@ -157,7 +159,7 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
   }, [videoRef, startDetection])
 
   useEffect(() => {
-    if (modelsLoaded) startCamera()
+    if (modelsLoaded && shouldStart) startCamera()
     return () => {
       stopDetection()
       if (streamRef.current) {
@@ -168,7 +170,7 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>) {
         videoRef.current.srcObject = null
       }
     }
-  }, [modelsLoaded, startCamera, stopDetection, videoRef])
+  }, [modelsLoaded, startCamera, stopDetection, videoRef, shouldStart])
 
   // Aliases for Spanish transition compatibility
   return { 
