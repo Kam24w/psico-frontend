@@ -23,15 +23,17 @@ export default function CallPage() {
   const { user } = useAuth()
   const videoRef = useRef<HTMLVideoElement>(null)
 
+  // ── UI States (Moved up for hook dependency) ────────────────────────
+  const [sessionStarted, setSessionStarted] = useState(false)
+
   // ── Emotion Detection Hook ─────────────────────
-  const { currentEmotion, modelsLoaded, cameraError } = useEmotionDetector(videoRef)
+  const { currentEmotion, modelsLoaded, cameraError } = useEmotionDetector(videoRef, sessionStarted)
 
   // ── UI States ─────────────────────────────────────────────────────────
   const [isMuted, setIsMuted] = useState(false)
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [aiStatus, setAiStatus] = useState<AiStatus>('waiting')
   const [lastAiMessage, setLastAiMessage] = useState('')
-  const [sessionStarted, setSessionStarted] = useState(false)
   const [conversationMode, setConversationMode] = useState<ConversationMode>('free')
   const [isListening, setIsListening] = useState(false)
 
