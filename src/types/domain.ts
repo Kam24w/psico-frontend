@@ -111,8 +111,19 @@ export interface DashboardSummary {
   userId: number;
   activeConversations: number;
   savedMemories: number;
+  finishedChats: number;
+  newMemoriesThisWeek: number;
+  weeklyProgress: number[];
   emotionalTrend: number;
   latestAlert: string;
+}
+
+export interface UserProfile {
+  userId: number;
+  fullName: string;
+  email: string;
+  currentEmotionalState: string;
+  preferences: string;
 }
 
 // ── Aliases de Compatibilidad para Refactorización Progresiva ─────────────────
