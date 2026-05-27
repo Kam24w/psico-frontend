@@ -38,7 +38,7 @@ export default function RegisterPage() {
         password: form.password,
       })
       login(res.data)
-      navigate('/call')
+      navigate('/dashboard')
     } catch (err) {
       const apiError = err as ApiError
       setError(
