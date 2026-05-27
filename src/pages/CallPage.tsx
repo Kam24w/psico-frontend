@@ -542,6 +542,14 @@ export default function CallPage() {
           </button>
 
           <button
+            className="call-dock-btn secondary-action"
+            onClick={() => navigate('/dashboard')}
+          >
+            <span className="btn-icon">🎛️</span>
+            <span className="btn-text">Panel</span>
+          </button>
+
+          <button
             className="call-dock-btn end-call"
             onClick={endCall}
           >
