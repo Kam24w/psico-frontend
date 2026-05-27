@@ -104,6 +104,7 @@ export default function ChatPage() {
         </div>
 
         <div className="sidebar-footer">
+           <button className="sidebar-action-btn" onClick={() => navigate('/dashboard')}>🎛️ Panel</button>
            <button className="sidebar-action-btn" onClick={() => navigate('/call')}>📞 Llamada</button>
            <button className="sidebar-action-btn sidebar-logout-btn" onClick={handleLogout}>Salir ({usuario?.name || (usuario as any)?.nombre || ''})</button>
         </div>

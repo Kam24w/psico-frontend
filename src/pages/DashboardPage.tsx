@@ -220,7 +220,6 @@ export default function DashboardPage() {
             {/* Footer */}
             <footer className="dash-footer">
               <span className="footer-left">© 2026 Mindsee</span>
-              <span className="footer-right">Finalizados | Soporte | {userName} <span className="footer-star">✨</span></span>
             </footer>
 
           </div>
