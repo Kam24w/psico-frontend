@@ -9,6 +9,7 @@ import type {
   Recommendation,
   RegisterRequest,
   EmotionType,
+  UserMemory,
 } from '../types/domain'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
@@ -112,6 +113,17 @@ export const emotionService = {
   /** Historial completo de emociones */
   getHistory: (userId: number) =>
     api.get<Emotion[]>(`/api/emotions/history/${userId}`),
+}
+
+// ── Memory ────────────────────────────────────────────────────────────────────
+export const memoryService = {
+  /** Guarda un nuevo recuerdo/memoria */
+  saveMemory: (userId: number, content: string, associatedEmotion: EmotionType) =>
+    api.post<UserMemory>('/api/memories', null, { params: { userId, content, associatedEmotion } }),
+
+  /** Obtiene la lista de memorias de un usuario */
+  getMemories: (userId: number) =>
+    api.get<UserMemory[]>(`/api/memories/${userId}`),
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────

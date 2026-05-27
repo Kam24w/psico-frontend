@@ -6,10 +6,12 @@ import type { ReactNode } from 'react'
 import { UI_TEXTS } from './constants/texts'
 
 // Componentes de página cargados de forma perezosa (Lazy Loading)
-const LoginPage    = React.lazy(() => import('./pages/LoginPage'))
-const RegisterPage = React.lazy(() => import('./pages/RegisterPage'))
-const ChatPage     = React.lazy(() => import('./pages/ChatPage'))
-const CallPage     = React.lazy(() => import('./pages/CallPage'))
+const LoginPage     = React.lazy(() => import('./pages/LoginPage'))
+const RegisterPage  = React.lazy(() => import('./pages/RegisterPage'))
+const ChatPage      = React.lazy(() => import('./pages/ChatPage'))
+const CallPage      = React.lazy(() => import('./pages/CallPage'))
+const DashboardPage = React.lazy(() => import('./pages/DashboardPage'))
+const MemoriesPage  = React.lazy(() => import('./pages/MemoriesPage'))
 
 // Fallback visual mientras se carga el chunk
 const PageLoader = () => (
@@ -33,9 +35,19 @@ export default function App() {
         <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/"         element={<Navigate to="/call" replace />} />
+              <Route path="/"         element={<Navigate to="/dashboard" replace />} />
               <Route path="/login"    element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/dashboard" element={
+                <RutaProtegida>
+                  <DashboardPage />
+                </RutaProtegida>
+              } />
+              <Route path="/memories" element={
+                <RutaProtegida>
+                  <MemoriesPage />
+                </RutaProtegida>
+              } />
               <Route path="/chat"     element={
                 <RutaProtegida>
                   <ChatPage />
