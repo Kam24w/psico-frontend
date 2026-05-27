@@ -113,9 +113,9 @@ export default function ProfilePage() {
           <div className="dash-content-inner">
             
             {/* Header */}
-            <header className="dash-page-header">
+            <header className="dash-page-header" style={{marginBottom: '24px'}}>
               <h1 className="dash-page-title">Tu Perfil</h1>
-              <p className="dash-page-subtitle">Administra tu información personal y preferencias de la aplicación.</p>
+              <p className="dash-page-subtitle">Administra tu identidad, preferencias y la forma en que la IA de Mindsee interactúa contigo.</p>
             </header>
 
             {loading ? (
@@ -125,11 +125,11 @@ export default function ProfilePage() {
             ) : (
               <div className="profile-grid">
                 
-                {/* Personal Info Panel */}
+                {/* Left Column: Personal Info Panel */}
                 <div className="dash-panel profile-info-panel">
-                  <h3 className="panel-title">Información Personal</h3>
+                  <div className="profile-banner"></div>
                   
-                  <div className="profile-avatar-section">
+                  <div className="profile-avatar-wrapper">
                     <div className="profile-avatar-circle">
                       {profile?.fullName?.charAt(0).toUpperCase() || 'U'}
                     </div>
@@ -137,99 +137,116 @@ export default function ProfilePage() {
                       <h2>{profile?.fullName}</h2>
                       <p>{profile?.email}</p>
                     </div>
-                  </div>
 
-                  <div className="profile-details-list">
-                    <div className="profile-detail-item">
-                      <span className="detail-label">Estado Emocional Reciente:</span>
-                      <span className="detail-value emotion-badge">{profile?.currentEmotionalState || 'NEUTRAL'}</span>
+                    <div className="profile-details-list">
+                      <div className="profile-detail-item">
+                        <span className="detail-label">Estado Actual</span>
+                        <span className="detail-value emotion-badge">{profile?.currentEmotionalState || 'NEUTRAL'}</span>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <p className="profile-read-only-note">
-                    Para modificar tu nombre de usuario o correo electrónico, por favor contacta a soporte técnico.
-                  </p>
-                </div>
-
-                {/* Preferences Panel */}
-                <div className="dash-panel profile-prefs-panel">
-                  <h3 className="panel-title">Preferencias de la Aplicación</h3>
-                  
-                  <div className="pref-item">
-                    <div className="pref-info">
-                      <h4>Modo Oscuro</h4>
-                      <p>Habilitar el tema oscuro inmersivo en todas las vistas.</p>
-                    </div>
-                    <label className="pref-switch">
-                      <input type="checkbox" checked={prefs.darkMode} onChange={() => handleTogglePref('darkMode')} />
-                      <span className="pref-slider"></span>
-                    </label>
-                  </div>
-
-                  <div className="pref-item">
-                    <div className="pref-info">
-                      <h4>Notificaciones Push</h4>
-                      <p>Recibir notificaciones cuando la IA detecte alertas emocionales críticas.</p>
-                    </div>
-                    <label className="pref-switch">
-                      <input type="checkbox" checked={prefs.notifications} onChange={() => handleTogglePref('notifications')} />
-                      <span className="pref-slider"></span>
-                    </label>
-                  </div>
-
-                  <div className="pref-item">
-                    <div className="pref-info">
-                      <h4>Recordatorio Diario</h4>
-                      <p>Recibir un aviso para hacer tu check-in emocional al final del día.</p>
-                    </div>
-                    <label className="pref-switch">
-                      <input type="checkbox" checked={prefs.dailyReminder} onChange={() => handleTogglePref('dailyReminder')} />
-                      <span className="pref-slider"></span>
-                    </label>
-                  </div>
-
-                  <div className="pref-item">
-                    <div className="pref-info">
-                      <h4>Modo Terapia Estricto</h4>
-                      <p>La IA priorizará análisis técnicos y directos sobre charla casual.</p>
-                    </div>
-                    <label className="pref-switch">
-                      <input type="checkbox" checked={prefs.strictTherapyMode} onChange={() => handleTogglePref('strictTherapyMode')} />
-                      <span className="pref-slider"></span>
-                    </label>
-                  </div>
-
-                  <button 
-                    className="save-prefs-btn" 
-                    onClick={handleSavePreferences}
-                    disabled={saving}
-                  >
-                    {saving ? 'Guardando...' : 'Guardar Preferencias'}
-                  </button>
-                </div>
-
-                {/* Danger Zone */}
-                <div className="dash-panel profile-danger-panel">
-                  <h3 className="panel-title danger-title">Zona de Peligro</h3>
-                  <p>Acciones irreversibles relacionadas a tus datos personales.</p>
-                  
-                  <div className="danger-action-row">
-                    <div className="danger-action-info">
-                      <h4>Cerrar Sesión</h4>
-                      <p>Cierra la sesión actual en este dispositivo de forma segura.</p>
-                    </div>
-                    <button className="danger-btn outline" onClick={handleLogout}>Cerrar Sesión</button>
-                  </div>
-
-                  <div className="danger-action-row">
-                    <div className="danger-action-info">
-                      <h4>Eliminar Datos y Memorias</h4>
-                      <p>Borra permanentemente todo el historial de conversaciones y memorias guardadas. (No disponible en beta)</p>
-                    </div>
-                    <button className="danger-btn disabled" disabled>Eliminar Datos</button>
+                    
+                    <p className="profile-read-only-note">
+                      Para modificar tu nombre de usuario o correo electrónico, por favor contacta a soporte técnico de Mindsee.
+                    </p>
                   </div>
                 </div>
 
+                {/* Right Column: Preferences & Danger Zone */}
+                <div className="profile-right-column">
+                  
+                  {/* Preferences Panel */}
+                  <div className="dash-panel profile-prefs-panel">
+                    <h3 className="panel-title">Preferencias de la Aplicación</h3>
+                    
+                    <div className="pref-item">
+                      <div className="pref-info-wrapper">
+                        <div className="pref-icon">🌙</div>
+                        <div className="pref-info">
+                          <h4>Tema Oscuro Inmersivo</h4>
+                          <p>Habilitar el tema oscuro tipo Glassmorphism en todas las vistas.</p>
+                        </div>
+                      </div>
+                      <label className="pref-switch">
+                        <input type="checkbox" checked={prefs.darkMode} onChange={() => handleTogglePref('darkMode')} />
+                        <span className="pref-slider"></span>
+                      </label>
+                    </div>
+
+                    <div className="pref-item">
+                      <div className="pref-info-wrapper">
+                        <div className="pref-icon">🔔</div>
+                        <div className="pref-info">
+                          <h4>Notificaciones Push</h4>
+                          <p>Recibir notificaciones cuando la IA detecte alertas críticas.</p>
+                        </div>
+                      </div>
+                      <label className="pref-switch">
+                        <input type="checkbox" checked={prefs.notifications} onChange={() => handleTogglePref('notifications')} />
+                        <span className="pref-slider"></span>
+                      </label>
+                    </div>
+
+                    <div className="pref-item">
+                      <div className="pref-info-wrapper">
+                        <div className="pref-icon">📅</div>
+                        <div className="pref-info">
+                          <h4>Recordatorio Diario</h4>
+                          <p>Recibir un aviso para hacer tu check-in emocional diario.</p>
+                        </div>
+                      </div>
+                      <label className="pref-switch">
+                        <input type="checkbox" checked={prefs.dailyReminder} onChange={() => handleTogglePref('dailyReminder')} />
+                        <span className="pref-slider"></span>
+                      </label>
+                    </div>
+
+                    <div className="pref-item">
+                      <div className="pref-info-wrapper">
+                        <div className="pref-icon">🧠</div>
+                        <div className="pref-info">
+                          <h4>Modo Terapia Estricto</h4>
+                          <p>La IA priorizará análisis técnicos y directos sobre charla casual.</p>
+                        </div>
+                      </div>
+                      <label className="pref-switch">
+                        <input type="checkbox" checked={prefs.strictTherapyMode} onChange={() => handleTogglePref('strictTherapyMode')} />
+                        <span className="pref-slider"></span>
+                      </label>
+                    </div>
+
+                    <button 
+                      className="save-prefs-btn" 
+                      onClick={handleSavePreferences}
+                      disabled={saving}
+                    >
+                      {saving ? 'Guardando...' : 'Guardar Preferencias'}
+                    </button>
+                  </div>
+
+                  {/* Danger Zone */}
+                  <div className="dash-panel profile-danger-panel">
+                    <h3 className="panel-title danger-title">
+                      <span style={{fontSize: '24px'}}>⚠️</span> Zona de Peligro
+                    </h3>
+                    
+                    <div className="danger-action-row">
+                      <div className="danger-action-info">
+                        <h4>Cerrar Sesión</h4>
+                        <p>Cierra la sesión actual en este dispositivo de forma segura, borrando tu token local.</p>
+                      </div>
+                      <button className="danger-btn" onClick={handleLogout}>Cerrar Sesión</button>
+                    </div>
+
+                    <div className="danger-action-row">
+                      <div className="danger-action-info">
+                        <h4>Eliminar Datos y Memorias</h4>
+                        <p>Borra permanentemente todo el historial de conversaciones y memorias guardadas. Esta acción no se puede deshacer.</p>
+                      </div>
+                      <button className="danger-btn disabled" disabled>Eliminar Datos</button>
+                    </div>
+                  </div>
+
+                </div>
               </div>
             )}
 
