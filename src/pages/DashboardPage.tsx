@@ -30,6 +30,13 @@ export default function DashboardPage() {
 
   const userName = usuario?.name || (usuario as any)?.nombre || 'Usuario'
 
+  const getY = (score: number) => 100 - score;
+  const progress = summary?.weeklyProgress || [50, 50, 50, 50, 50, 50, 50];
+  const xCoords = [5, 20, 35, 50, 65, 80, 95];
+  
+  const polygonPoints = `5,100 ${progress.map((p, i) => `${xCoords[i]},${getY(p)}`).join(' ')} 95,100`;
+  const polylinePoints = progress.map((p, i) => `${xCoords[i]},${getY(p)}`).join(' ');
+
   return (
     <div className="dash-app-layout">
       {/* Top Navbar */}
@@ -63,11 +70,7 @@ export default function DashboardPage() {
             <span className="side-icon">📓</span>
             <span className="side-label">Memories</span>
           </div>
-          <div className="dash-side-item disabled">
-            <span className="side-icon">🏋️</span>
-            <span className="side-label">Ejercicios</span>
-          </div>
-          <div className="dash-side-item disabled">
+          <div className={`dash-side-item ${location.pathname === '/profile' ? 'active' : ''}`} onClick={() => navigate('/profile')}>
             <span className="side-icon">👤</span>
             <span className="side-label">Perfil</span>
           </div>
@@ -145,18 +148,14 @@ export default function DashboardPage() {
                               <stop offset="100%" stopColor="rgba(45, 212, 191, 0)"/>
                             </linearGradient>
                           </defs>
-                          <polygon points="5,100 5,85 20,65 35,62 50,45 65,35 80,30 95,15 95,100" fill="url(#chart-grad)"/>
-                          <polyline points="5,85 20,65 35,62 50,45 65,35 80,30 95,15" fill="none" stroke="#2dd4bf" strokeWidth="1.5"/>
-                          <circle cx="5" cy="85" r="1.5" fill="#2dd4bf" stroke="#18181b" strokeWidth="0.5"/>
-                          <circle cx="20" cy="65" r="1.5" fill="#2dd4bf" stroke="#18181b" strokeWidth="0.5"/>
-                          <circle cx="35" cy="62" r="1.5" fill="#2dd4bf" stroke="#18181b" strokeWidth="0.5"/>
-                          <circle cx="50" cy="45" r="1.5" fill="#2dd4bf" stroke="#18181b" strokeWidth="0.5"/>
-                          <circle cx="65" cy="35" r="1.5" fill="#2dd4bf" stroke="#18181b" strokeWidth="0.5"/>
-                          <circle cx="80" cy="30" r="1.5" fill="#2dd4bf" stroke="#18181b" strokeWidth="0.5"/>
-                          <circle cx="95" cy="15" r="1.5" fill="#2dd4bf" stroke="#18181b" strokeWidth="0.5"/>
+                          <polygon points={polygonPoints} fill="url(#chart-grad)"/>
+                          <polyline points={polylinePoints} fill="none" stroke="#2dd4bf" strokeWidth="1.5"/>
+                          {progress.map((p, i) => (
+                             <circle key={i} cx={xCoords[i]} cy={getY(p)} r="1.5" fill="#2dd4bf" stroke="#18181b" strokeWidth="0.5"/>
+                          ))}
                         </svg>
                         <div className="chart-x-axis">
-                          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                          <span>D1</span><span>D2</span><span>D3</span><span>D4</span><span>D5</span><span>D6</span><span>D7</span>
                         </div>
                       </div>
                     </div>
@@ -170,20 +169,16 @@ export default function DashboardPage() {
                     </div>
                     <ul className="summary-list">
                       <li>
-                        <span className="list-text">Chats finalizados: <strong>3</strong></span>
+                        <span className="list-text">Chats finalizados: <strong>{summary?.finishedChats || 0}</strong></span>
                         <span className="list-dots">⋮</span>
                       </li>
                       <li>
-                        <span className="list-text">Nuevas memorias: <strong>1</strong></span>
-                        <span className="list-dots">⋮</span>
-                      </li>
-                      <li>
-                        <span className="list-text">Próximo ejercicio: <strong>Mañana (Mindfulness)</strong></span>
+                        <span className="list-text">Nuevas memorias: <strong>{summary?.newMemoriesThisWeek || 0}</strong></span>
                         <span className="list-dots">⋮</span>
                       </li>
                     </ul>
                     <p className="summary-footer-text">
-                      Your well-being score is up by 5% this week!<br/>Keep it up, {userName.toLowerCase()}.
+                      Tu progreso refleja cómo te has sentido a lo largo de los últimos 7 días.<br/>¡Sigue así, {userName.toLowerCase()}!
                     </p>
                   </div>
                 </div>

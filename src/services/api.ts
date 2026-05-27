@@ -10,6 +10,7 @@ import type {
   RegisterRequest,
   EmotionType,
   UserMemory,
+  UserProfile,
 } from '../types/domain'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
@@ -135,6 +136,17 @@ export const dashboardService = {
   /** Estadísticas detalladas (StatisticsController → /api/statistics/{id}) */
   getStatistics: (userId: number) =>
     api.get<DashboardSummary>(`/api/statistics/${userId}`),
+}
+
+// ── User Profile ───────────────────────────────────────────────────────────────
+export const userService = {
+  /** Obtiene el perfil de usuario */
+  getProfile: (userId: number) =>
+    api.get<UserProfile>(`/api/users/${userId}`),
+
+  /** Actualiza las preferencias (espera JSON en formato string) */
+  updatePreferences: (userId: number, preferences: string) =>
+    api.put<UserProfile>(`/api/users/${userId}/preferences`, { preferences }),
 }
 
 // ── Intervention ────────────────────────────────────────────────────────────

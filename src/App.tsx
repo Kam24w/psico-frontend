@@ -12,6 +12,7 @@ const ChatPage      = React.lazy(() => import('./pages/ChatPage'))
 const CallPage      = React.lazy(() => import('./pages/CallPage'))
 const DashboardPage = React.lazy(() => import('./pages/DashboardPage'))
 const MemoriesPage  = React.lazy(() => import('./pages/MemoriesPage'))
+const ProfilePage   = React.lazy(() => import('./pages/ProfilePage'))
 
 // Fallback visual mientras se carga el chunk
 const PageLoader = () => (
@@ -19,7 +20,6 @@ const PageLoader = () => (
     <div className="light-spinner" style={{ width: '40px', height: '40px', borderWidth: '4px' }}></div>
   </div>
 )
-
 
 // Ruta protegida: redirige al login si no hay sesión
 function RutaProtegida({ children }: { children: ReactNode }) {
@@ -56,6 +56,11 @@ export default function App() {
               <Route path="/call"     element={
                 <RutaProtegida>
                   <CallPage />
+                </RutaProtegida>
+              } />
+              <Route path="/profile"  element={
+                <RutaProtegida>
+                  <ProfilePage />
                 </RutaProtegida>
               } />
             </Routes>
