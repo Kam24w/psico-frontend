@@ -53,17 +53,17 @@ export default function MemoriesPage() {
       <div className="global-blob-2"></div>
       <div className="global-blob-3"></div>
 
-      <header className="dashboard-header">
-        <div className="dashboard-brand" onClick={() => navigate('/dashboard')} style={{ cursor: 'pointer' }}>
-          <span className="dashboard-logo">🧠</span>
-          <span>Psicólogo Virtual</span>
+      <nav className="dash-top-nav">
+        <div className="dash-nav-brand" onClick={() => navigate('/dashboard')} style={{ cursor: 'pointer' }}>
+          <span className="dash-logo-icon">🧠</span>
+          <span className="dash-logo-text">Mindsee</span>
         </div>
-        <div className="dashboard-user">
-          <button onClick={() => navigate('/dashboard')} className="memories-back-btn">Volver al Panel</button>
-          <span>Hola, {usuario?.name || (usuario as any)?.nombre}</span>
-          <button onClick={handleLogout} className="dashboard-logout-btn">Salir</button>
+        <div className="dash-nav-profile">
+          <button onClick={() => navigate('/dashboard')} className="dash-nav-logout" style={{marginRight: '8px'}}>Volver al Panel</button>
+          <span className="dash-nav-greeting">Hola, {usuario?.name || (usuario as any)?.nombre}</span>
+          <button onClick={handleLogout} className="dash-nav-logout">Salir</button>
         </div>
-      </header>
+      </nav>
 
       <main className="memories-main">
         <div className="memories-header-actions">

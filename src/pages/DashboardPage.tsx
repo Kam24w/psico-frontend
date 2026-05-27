@@ -36,7 +36,7 @@ export default function DashboardPage() {
       <nav className="dash-top-nav">
         <div className="dash-nav-brand">
           <span className="dash-logo-icon">🧠</span>
-          <span className="dash-logo-text">Psicólogo Virtual</span>
+          <span className="dash-logo-text">Mindsee</span>
         </div>
         <div className="dash-nav-profile">
           <span className="dash-nav-greeting">Hola, {userName.toLowerCase()}</span>
@@ -194,7 +194,7 @@ export default function DashboardPage() {
                     <div className="action-box-icon shadow-icon">📞</div>
                     <div className="action-box-info">
                       <h4>Videollamada</h4>
-                      <p>Habla con tu psicólogo virtual por voz y video</p>
+                      <p>Habla con tu Mindsee por voz y video</p>
                     </div>
                   </div>
                   
@@ -219,7 +219,7 @@ export default function DashboardPage() {
 
             {/* Footer */}
             <footer className="dash-footer">
-              <span className="footer-left">© 2026 Psicólogo Virtual</span>
+              <span className="footer-left">© 2026 Mindsee</span>
               <span className="footer-right">Finalizados | Soporte | {userName} <span className="footer-star">✨</span></span>
             </footer>
 

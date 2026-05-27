@@ -1,4 +1,4 @@
-# 🧠 Psicólogo Virtual - Frontend
+# 🧠 Mindsee - Frontend
 
 Interfaz web del acompañante emocional inteligente con detección facial en tiempo real.
 
