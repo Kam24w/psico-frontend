@@ -95,6 +95,16 @@ export interface Recommendation {
   priority: number;
 }
 
+// ── Memorias (Memories) ───────────────────────────────────────────────────────
+
+export interface UserMemory {
+  id: number;
+  userId: number;
+  text: string;
+  associatedEmotion: EmotionType | null;
+  createdAt: string;
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export interface DashboardSummary {

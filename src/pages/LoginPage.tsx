@@ -22,7 +22,7 @@ export default function LoginPage() {
     try {
       const res = await authService.login(form)
       login(res.data)
-      navigate('/call')
+      navigate('/dashboard')
     } catch (err) {
       const apiError = err as ApiError
       const isNetworkError = (err as any).message === 'Network Error' || !(err as any).response;
