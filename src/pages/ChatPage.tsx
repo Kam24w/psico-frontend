@@ -1,19 +1,32 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CameraPanel from '../components/Camera/CameraPanel'
 import ChatWindow from '../components/Chat/ChatWindow'
 import { useAuth } from '../context/AuthContext'
-import type { EmocionDetectada } from '../types/domain'
+import { userService } from '../services/api'
+import type { EmocionDetectada, UserProfile } from '../types/domain'
 
 export default function ChatPage() {
   const [emocionActual, setEmocionActual] = useState<EmocionDetectada>({ type: 'NEUTRAL', intensity: 0 })
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const userId = usuario?.id || (usuario as any)?.usuarioId
+    if (userId) {
+      userService.getProfile(userId)
+        .then(res => setProfile(res.data))
+        .catch(err => console.error("Error fetching profile:", err))
+    }
+  }, [usuario])
 
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
+
+  const userName = usuario?.name || (usuario as any)?.nombre || 'Usuario'
 
   const rawType = emocionActual?.type || (emocionActual as any)?.tipo || 'NEUTRAL';
   
@@ -106,7 +119,16 @@ export default function ChatPage() {
         <div className="sidebar-footer">
            <button className="sidebar-action-btn" onClick={() => navigate('/dashboard')}>🎛️ Panel</button>
            <button className="sidebar-action-btn" onClick={() => navigate('/call')}>📞 Llamada</button>
-           <button className="sidebar-action-btn sidebar-logout-btn" onClick={handleLogout}>Salir ({usuario?.name || (usuario as any)?.nombre || ''})</button>
+           <button className="sidebar-action-btn sidebar-logout-btn" onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+             <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+               {profile?.avatarUrl ? (
+                 <img src={profile.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+               ) : (
+                 <span style={{ fontSize: '10px', fontWeight: 'bold' }}>{userName.charAt(0).toUpperCase()}</span>
+               )}
+             </div>
+             Salir ({userName})
+           </button>
         </div>
       </aside>
 
