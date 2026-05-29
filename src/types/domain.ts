@@ -6,16 +6,12 @@ export interface User {
   email: string;
 }
 
-/** Mapeado del AuthResponse del backend */
 export interface AuthPayload {
   token: string;
   userId: number;
   name: string;
   email: string;
   role?: string;
-  // Aliases para compatibilidad interna
-  usuarioId?: number;
-  nombre?: string;
 }
 
 export interface LoginRequest {
@@ -127,11 +123,4 @@ export interface UserProfile {
   avatarUrl?: string;
 }
 
-// ── Aliases de Compatibilidad para Refactorización Progresiva ─────────────────
-export type Usuario = User;
-export type TipoEmocion = EmotionType;
-export type EmocionDetectada = DetectedEmotion;
-export type RemitenteMensaje = MessageSender;
-export type Mensaje = Message;
-export type Conversacion = Conversation;
-export type Recomendacion = Recommendation;
+

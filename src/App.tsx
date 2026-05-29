@@ -23,10 +23,10 @@ const PageLoader = () => (
 )
 
 // Ruta protegida: redirige al login si no hay sesión
-function RutaProtegida({ children }: { children: ReactNode }) {
-  const { usuario, cargando } = useAuth()
-  if (cargando) return <div className="app-loading">{UI_TEXTS.app.loading}</div>
-  return usuario ? children : <Navigate to="/login" replace />
+function ProtectedRoute({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth()
+  if (loading) return <div className="app-loading">{UI_TEXTS.app.loading}</div>
+  return user ? children : <Navigate to="/login" replace />
 }
 
 export default function App() {
@@ -41,29 +41,29 @@ export default function App() {
                 <Route path="/login"    element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/dashboard" element={
-                  <RutaProtegida>
+                  <ProtectedRoute>
                     <DashboardPage />
-                  </RutaProtegida>
+                  </ProtectedRoute>
                 } />
                 <Route path="/memories" element={
-                  <RutaProtegida>
+                  <ProtectedRoute>
                     <MemoriesPage />
-                  </RutaProtegida>
+                  </ProtectedRoute>
                 } />
                 <Route path="/chat"     element={
-                  <RutaProtegida>
+                  <ProtectedRoute>
                     <ChatPage />
-                  </RutaProtegida>
+                  </ProtectedRoute>
                 } />
                 <Route path="/call"     element={
-                  <RutaProtegida>
+                  <ProtectedRoute>
                     <CallPage />
-                  </RutaProtegida>
+                  </ProtectedRoute>
                 } />
                 <Route path="/profile"  element={
-                  <RutaProtegida>
+                  <ProtectedRoute>
                     <ProfilePage />
-                  </RutaProtegida>
+                  </ProtectedRoute>
                 } />
               </Routes>
             </Suspense>

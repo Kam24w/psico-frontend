@@ -8,9 +8,6 @@ interface AuthContextValue {
   login: (data: AuthPayload) => void;
   logout: () => void;
   loading: boolean;
-  // Compatibility properties for Spanish transition
-  usuario: User | null;
-  cargando: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -21,8 +18,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('psico_token')
-    const savedUser = localStorage.getItem('psico_usuario')
+    const savedToken = localStorage.getItem('mindsee_token')
+    const savedUser = localStorage.getItem('mindsee_user')
     if (savedToken && savedUser) {
       setToken(savedToken)
       setUser(JSON.parse(savedUser))
@@ -31,21 +28,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = (data: AuthPayload) => {
-    const id = data.userId ?? data.usuarioId ?? 0
-    const name = data.name ?? data.nombre ?? ''
-    const localUser: User = { id, name, email: data.email }
+    const localUser: User = { id: data.userId, name: data.name, email: data.email }
 
     setToken(data.token)
     setUser(localUser)
-    localStorage.setItem('psico_token', data.token)
-    localStorage.setItem('psico_usuario', JSON.stringify(localUser))
+    localStorage.setItem('mindsee_token', data.token)
+    localStorage.setItem('mindsee_user', JSON.stringify(localUser))
   }
 
   const logout = () => {
     setToken(null)
     setUser(null)
-    localStorage.removeItem('psico_token')
-    localStorage.removeItem('psico_usuario')
+    localStorage.removeItem('mindsee_token')
+    localStorage.removeItem('mindsee_user')
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
     }
@@ -57,9 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token, 
       login, 
       logout, 
-      loading,
-      usuario: user,
-      cargando: loading
+      loading
     }}>
       {children}
     </AuthContext.Provider>
