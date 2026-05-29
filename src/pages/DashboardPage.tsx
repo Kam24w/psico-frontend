@@ -1,22 +1,29 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { dashboardService } from '../services/api'
-import type { DashboardSummary } from '../types/domain'
+import { dashboardService, userService } from '../services/api'
+import type { DashboardSummary, UserProfile } from '../types/domain'
 
 export default function DashboardPage() {
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const userId = usuario?.id || (usuario as any)?.usuarioId
     if (userId) {
-      dashboardService.getSummary(userId)
-        .then(res => setSummary(res.data))
-        .catch(err => console.error("Error fetching dashboard summary:", err))
+      Promise.all([
+        dashboardService.getSummary(userId),
+        userService.getProfile(userId)
+      ])
+        .then(([summaryRes, profileRes]) => {
+          setSummary(summaryRes.data)
+          setProfile(profileRes.data)
+        })
+        .catch(err => console.error("Error fetching data:", err))
         .finally(() => setLoading(false))
     } else {
       setLoading(false)
@@ -46,7 +53,16 @@ export default function DashboardPage() {
           <span className="dash-logo-text">Mindsee</span>
         </div>
         <div className="dash-nav-profile">
-          <span className="dash-nav-greeting">Hola, {userName.toLowerCase()}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginRight: '16px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{userName.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+            <span className="dash-nav-greeting" style={{ margin: 0 }}>Hola, {userName.toLowerCase()}</span>
+          </div>
           <button onClick={handleLogout} className="dash-nav-logout">Salir</button>
         </div>
       </nav>
