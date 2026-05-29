@@ -80,6 +80,9 @@ export const conversationService = {
   getActiveHistory: (sessionType: string = 'TEXTO') =>
     api.get<Message[]>('/api/conversations/active-history', { params: { sessionType } }),
 
+  resumeSession: (userId: number, conversationId: number, sessionType: string = 'TEXTO') =>
+    api.post<Message>(`/api/conversations/resume/${conversationId}`, null, { params: { userId, sessionType } }),
+
   /** Lista de conversaciones de un usuario */
   getConversations: (userId: number) =>
     api.get<Conversation[]>(`/api/conversations/user/${userId}`),
