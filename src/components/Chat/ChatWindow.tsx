@@ -398,15 +398,13 @@ export default function ChatWindow({ currentEmotion, emocionActual, profile }: C
                           {formatSessionDate(selectedSession)}
                         </span>
                         <span className="hist-detail-count">{selectedSession.messageCount} mensajes</span>
-                        {!selectedSession.active && (
-                          <button
-                            className="save-settings-btn"
-                            style={{ padding: '4px 12px', fontSize: '0.85rem', marginLeft: 'auto', background: 'linear-gradient(135deg, #10b981, #059669)' }}
-                            onClick={() => resumeSession(selectedSession)}
-                          >
-                            Retomar Sesión
-                          </button>
-                        )}
+                        <button
+                          className="save-settings-btn"
+                          style={{ padding: '4px 12px', fontSize: '0.85rem', marginLeft: 'auto', background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                          onClick={() => resumeSession(selectedSession)}
+                        >
+                          🔄 Retomar Sesión
+                        </button>
                       </div>
                       {loadingSessionMessages ? (
                         <p className="modal-history-message">Cargando mensajes...</p>
