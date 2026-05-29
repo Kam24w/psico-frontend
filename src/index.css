@@ -313,6 +313,36 @@ body {
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
 }
 
+.auth-password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.auth-password-wrapper .auth-input {
+  padding-right: 50px;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  transition: color 0.2s ease;
+  outline: none;
+}
+
+.auth-password-toggle:hover {
+  color: var(--text-main);
+}
+
 .auth-button {
   margin-top: 8px;
   width: 100%;
