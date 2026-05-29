@@ -467,9 +467,18 @@ export default function CallPage() {
         </p>
       </div>
 
-      <div className={`call-video-wrapper ${aiStatus === 'speaking' ? 'pulsing-aura' : ''}`}>
-        {isCameraOff || cameraError || !sessionStarted ? (
-          <div className="call-video-off-placeholder">
+      <div className={`call-video-wrapper ${aiStatus === 'speaking' ? 'pulsing-aura' : ''}`} style={{ position: 'relative' }}>
+        <video
+          ref={videoRef}
+          className="call-video-circle"
+          autoPlay
+          playsInline
+          muted
+          style={{ opacity: (isCameraOff || cameraError || !sessionStarted) ? 0 : 1, transition: 'opacity 0.3s', position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+
+        {(isCameraOff || cameraError || !sessionStarted) && (
+          <div className="call-video-off-placeholder" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
             {profile?.avatarUrl ? (
               <img src={profile.avatarUrl} alt="Avatar" className="call-avatar-img" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
             ) : (
@@ -478,17 +487,35 @@ export default function CallPage() {
               </span>
             )}
           </div>
-        ) : (
-          <video
-            ref={videoRef}
-            className="call-video-circle"
-            autoPlay
-            playsInline
-            muted
-          />
         )}
 
-        <div className="call-emotion-badge">
+        {sessionStarted && !cameraError && (
+          <button
+            onClick={() => setIsCameraOff(!isCameraOff)}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(0, 0, 0, 0.4)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '50%',
+              width: '42px',
+              height: '42px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+              backdropFilter: 'blur(8px)',
+              transition: 'all 0.2s ease'
+            }}
+            title={isCameraOff ? "Mostrar cámara" : "Ocultar cámara"}
+          >
+            <span style={{ fontSize: '20px' }}>{isCameraOff ? '🙈' : '👁️'}</span>
+          </button>
+        )}
+
+        <div className="call-emotion-badge" style={{ zIndex: 10 }}>
           {EMOTION_LABELS_ES[currentEmotion.type] || currentEmotion.type}
         </div>
       </div>
