@@ -439,7 +439,8 @@ export default function ChatWindow({ currentEmotion, emocionActual, profile }: C
                             <li
                               key={conv.id || index}
                               className="glass-history-item"
-                              onClick={() => viewSessionMessages(conv)}
+                              onClick={() => resumeSession(conv)}
+                              style={{ cursor: 'pointer' }}
                             >
                               <div className="hist-item-left">
                                 <span className={`hist-tipo-badge ${conv.type === 'VIDEO' ? 'badge-video' : 'badge-texto'}`}>
@@ -456,7 +457,7 @@ export default function ChatWindow({ currentEmotion, emocionActual, profile }: C
                                 </div>
                               </div>
                               <div className="hist-item-right">
-                                <span className="hist-chevron">›</span>
+                                <span className="hist-chevron" title="Retomar sesión">▶</span>
                                 <button
                                   className="delete-session-btn"
                                   title="Eliminar sesión"
