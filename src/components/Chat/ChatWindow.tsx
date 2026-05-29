@@ -133,6 +133,20 @@ export default function ChatWindow({ currentEmotion, emocionActual }: ChatWindow
     });
   }
 
+  // ── Resume session ───────────────────────────────────────────────────
+  const resumeSession = async (session: Conversation) => {
+    if (!user?.id) return
+    try {
+      await conversationService.resumeSession(user.id, session.id, 'TEXTO')
+      await fetchActiveHistory()
+      closeModal()
+      showToast('Sesión retomada correctamente', 'success')
+    } catch (error) {
+      console.error('Error al retomar sesión:', error)
+      showToast('No se pudo retomar la sesión.', 'error')
+    }
+  }
+
   // ── New Session ───────────────────────────────────────────────────────
   const startNewSession = async () => {
     if (!user?.id) return
@@ -383,6 +397,15 @@ export default function ChatWindow({ currentEmotion, emocionActual }: ChatWindow
                           {formatSessionDate(selectedSession)}
                         </span>
                         <span className="hist-detail-count">{selectedSession.messageCount} mensajes</span>
+                        {!selectedSession.active && (
+                          <button
+                            className="save-settings-btn"
+                            style={{ padding: '4px 12px', fontSize: '0.85rem', marginLeft: 'auto', background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                            onClick={() => resumeSession(selectedSession)}
+                          >
+                            Retomar Sesión
+                          </button>
+                        )}
                       </div>
                       {loadingSessionMessages ? (
                         <p className="modal-history-message">Cargando mensajes...</p>
