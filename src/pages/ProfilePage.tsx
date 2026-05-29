@@ -170,20 +170,6 @@ export default function ProfilePage() {
                     
                     <div className="pref-item">
                       <div className="pref-info-wrapper">
-                        <div className="pref-icon">🌙</div>
-                        <div className="pref-info">
-                          <h4>Tema Oscuro Inmersivo</h4>
-                          <p>Habilitar el tema oscuro tipo Glassmorphism en todas las vistas.</p>
-                        </div>
-                      </div>
-                      <label className="pref-switch">
-                        <input type="checkbox" checked={prefs.darkMode} onChange={() => handleTogglePref('darkMode')} />
-                        <span className="pref-slider"></span>
-                      </label>
-                    </div>
-
-                    <div className="pref-item">
-                      <div className="pref-info-wrapper">
                         <div className="pref-icon">🔔</div>
                         <div className="pref-info">
                           <h4>Notificaciones Push</h4>
