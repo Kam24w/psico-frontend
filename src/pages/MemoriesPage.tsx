@@ -62,7 +62,7 @@ export default function MemoriesPage() {
 
       <nav className="dash-top-nav">
         <div className="dash-nav-brand" onClick={() => navigate('/dashboard')} style={{ cursor: 'pointer' }}>
-          <span className="dash-logo-icon">🧠</span>
+          <img src="/Logo.png" alt="MindSee Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
           <span className="dash-logo-text">Mindsee</span>
         </div>
         <div className="dash-nav-profile">
