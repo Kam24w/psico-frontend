@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useEmotionDetector } from '../hooks/useEmotionDetector'
-import { conversationService } from '../services/api'
-import type { EmotionType } from '../types/domain'
+import { conversationService, userService } from '../services/api'
+import type { EmotionType, UserProfile } from '../types/domain'
 
 type ConversationMode = 'push-to-talk' | 'free'
 type AiStatus = 'waiting' | 'thinking' | 'speaking'
@@ -27,6 +27,17 @@ export default function CallPage() {
 
   // ── UI States (Moved up for hook dependency) ────────────────────────
   const [sessionStarted, setSessionStarted] = useState(false)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+
+  // Fetch profile to get avatarUrl
+  useEffect(() => {
+    const userId = user?.id || (user as any)?.usuarioId
+    if (userId) {
+      userService.getProfile(userId)
+        .then(res => setProfile(res.data))
+        .catch(err => console.error('Error fetching profile:', err))
+    }
+  }, [user])
 
   // ── Emotion Detection Hook ─────────────────────
   const { currentEmotion, modelsLoaded, cameraError } = useEmotionDetector(videoRef, sessionStarted)
@@ -457,9 +468,15 @@ export default function CallPage() {
       </div>
 
       <div className={`call-video-wrapper ${aiStatus === 'speaking' ? 'pulsing-aura' : ''}`}>
-        {isCameraOff ? (
+        {isCameraOff || cameraError || !sessionStarted ? (
           <div className="call-video-off-placeholder">
-            <span className="call-video-off-icon">👤</span>
+            {profile?.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="Avatar" className="call-avatar-img" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            ) : (
+              <span className="call-video-off-icon">
+                {profile?.fullName?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || 'U'}
+              </span>
+            )}
           </div>
         ) : (
           <video

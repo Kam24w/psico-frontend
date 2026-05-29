@@ -85,7 +85,16 @@ export default function ProfilePage() {
           <span className="dash-logo-text">Mindsee</span>
         </div>
         <div className="dash-nav-profile">
-          <span className="dash-nav-greeting">Hola, {userName.toLowerCase()}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginRight: '16px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{userName.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+            <span className="dash-nav-greeting" style={{ margin: 0 }}>Hola, {userName.toLowerCase()}</span>
+          </div>
           <button onClick={handleLogout} className="dash-nav-logout">Salir</button>
         </div>
       </nav>
@@ -194,13 +203,6 @@ export default function ProfilePage() {
                       <button className="danger-btn" onClick={() => showConfirm('¿Estás seguro de que deseas cerrar la sesión actual?', handleLogout)}>Cerrar Sesión</button>
                     </div>
 
-                    <div className="danger-action-row">
-                      <div className="danger-action-info">
-                        <h4>Eliminar Datos y Memorias</h4>
-                        <p>Borra permanentemente todo el historial de conversaciones y memorias guardadas. Esta acción no se puede deshacer.</p>
-                      </div>
-                      <button className="danger-btn disabled" disabled>Eliminar Datos</button>
-                    </div>
                   </div>
                 </div>
 

@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { memoryService } from '../services/api'
+import { memoryService, userService } from '../services/api'
 import MemoryCard from '../components/Memory/MemoryCard'
 import AddMemoryModal from '../components/Memory/AddMemoryModal'
-import type { UserMemory, EmotionType } from '../types/domain'
+import type { UserMemory, EmotionType, UserProfile } from '../types/domain'
 
 export default function MemoriesPage() {
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
   const [memories, setMemories] = useState<UserMemory[]>([])
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const fetchMemories = async () => {
+  const fetchMemoriesAndProfile = async () => {
     if (!usuario) return
     const userId = usuario.id || (usuario as any).usuarioId
     if (!userId) {
@@ -22,30 +23,36 @@ export default function MemoriesPage() {
     }
     
     try {
-      const res = await memoryService.getMemories(userId)
-      setMemories(res.data || [])
+      const [memoriesRes, profileRes] = await Promise.all([
+        memoryService.getMemories(userId),
+        userService.getProfile(userId)
+      ])
+      setMemories(memoriesRes.data || [])
+      setProfile(profileRes.data)
     } catch (err) {
-      console.error('Error fetching memories:', err)
+      console.error('Error fetching data:', err)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchMemories()
+    fetchMemoriesAndProfile()
   }, [usuario])
 
   const handleSaveMemory = async (text: string, emotion: EmotionType) => {
     if (!usuario) return
     const userId = usuario.id || (usuario as any).usuarioId
     await memoryService.saveMemory(userId, text, emotion)
-    await fetchMemories() // Recargar memorias
+    await fetchMemoriesAndProfile() // Recargar memorias
   }
 
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
+
+  const userName = usuario?.name || (usuario as any)?.nombre || 'Usuario'
 
   return (
     <div className="memories-page">
@@ -60,7 +67,16 @@ export default function MemoriesPage() {
         </div>
         <div className="dash-nav-profile">
           <button onClick={() => navigate('/dashboard')} className="dash-nav-logout" style={{marginRight: '8px'}}>Volver al Panel</button>
-          <span className="dash-nav-greeting">Hola, {usuario?.name || (usuario as any)?.nombre}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginRight: '16px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{userName.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+            <span className="dash-nav-greeting" style={{ margin: 0 }}>Hola, {userName.toLowerCase()}</span>
+          </div>
           <button onClick={handleLogout} className="dash-nav-logout">Salir</button>
         </div>
       </nav>
