@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
+import { useToast } from '../context/ToastContext'
 import { userService } from '../services/api'
 import type { UserProfile } from '../types/domain'
 
 export default function ProfilePage() {
   const { usuario, logout } = useAuth()
+  const { setTheme } = useTheme()
+  const { showToast, showConfirm } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
   
@@ -31,6 +35,9 @@ export default function ProfilePage() {
              if (res.data.preferences && res.data.preferences !== '[]') {
                 const parsed = JSON.parse(res.data.preferences);
                 setPrefs(prev => ({...prev, ...parsed}));
+                if (parsed.darkMode !== undefined) {
+                  setTheme(parsed.darkMode ? 'dark' : 'light');
+                }
              }
           } catch(e) {}
         })
@@ -49,6 +56,9 @@ export default function ProfilePage() {
   const handleTogglePref = (key: keyof typeof prefs) => {
     const newPrefs = { ...prefs, [key]: !prefs[key] };
     setPrefs(newPrefs);
+    if (key === 'darkMode') {
+      setTheme(newPrefs.darkMode ? 'dark' : 'light');
+    }
   }
 
   const handleSavePreferences = async () => {
@@ -59,9 +69,9 @@ export default function ProfilePage() {
     try {
       const res = await userService.updatePreferences(userId, JSON.stringify(prefs));
       setProfile(res.data);
-      alert('Preferencias guardadas exitosamente');
+      showToast('Preferencias guardadas exitosamente', 'success');
     } catch(e) {
-      alert('Error guardando preferencias');
+      showToast('Error guardando preferencias', 'error');
     } finally {
       setSaving(false);
     }
@@ -234,7 +244,7 @@ export default function ProfilePage() {
                         <h4>Cerrar Sesión</h4>
                         <p>Cierra la sesión actual en este dispositivo de forma segura, borrando tu token local.</p>
                       </div>
-                      <button className="danger-btn" onClick={handleLogout}>Cerrar Sesión</button>
+                      <button className="danger-btn" onClick={() => showConfirm('¿Estás seguro de que deseas cerrar la sesión actual?', handleLogout)}>Cerrar Sesión</button>
                     </div>
 
                     <div className="danger-action-row">
