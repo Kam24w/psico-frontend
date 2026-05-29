@@ -4,14 +4,15 @@ import ChatInput from './ChatInput'
 import { conversationService } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import type { DetectedEmotion, Message, Conversation } from '../../types/domain'
+import type { DetectedEmotion, Message, Conversation, UserProfile } from '../../types/domain'
 
 interface ChatWindowProps {
   currentEmotion: DetectedEmotion;
   emocionActual?: DetectedEmotion; // Compatibility alias
+  profile?: UserProfile | null;
 }
 
-export default function ChatWindow({ currentEmotion, emocionActual }: ChatWindowProps) {
+export default function ChatWindow({ currentEmotion, emocionActual, profile }: ChatWindowProps) {
   const { user } = useAuth()
   const activeEmotion = currentEmotion || emocionActual;
   
@@ -131,6 +132,20 @@ export default function ChatWindow({ currentEmotion, emocionActual }: ChatWindow
         showToast('No se pudo eliminar la sesión. Inténtalo de nuevo.', 'error')
       }
     });
+  }
+
+  // ── Resume session ───────────────────────────────────────────────────
+  const resumeSession = async (session: Conversation) => {
+    if (!user?.id) return
+    try {
+      await conversationService.resumeSession(user.id, session.id, 'TEXTO')
+      await fetchActiveHistory()
+      closeModal()
+      showToast('Sesión retomada correctamente', 'success')
+    } catch (error) {
+      console.error('Error al retomar sesión:', error)
+      showToast('No se pudo retomar la sesión.', 'error')
+    }
   }
 
   // ── New Session ───────────────────────────────────────────────────────
@@ -285,7 +300,7 @@ export default function ChatWindow({ currentEmotion, emocionActual }: ChatWindow
       {/* Messages */}
       <div className="light-cw-messages">
         {messages.map(msg => (
-          <ChatBubble key={msg.id} mensaje={msg} />
+          <ChatBubble key={msg.id} mensaje={msg} profile={profile} />
         ))}
 
         {loading && (
@@ -383,6 +398,15 @@ export default function ChatWindow({ currentEmotion, emocionActual }: ChatWindow
                           {formatSessionDate(selectedSession)}
                         </span>
                         <span className="hist-detail-count">{selectedSession.messageCount} mensajes</span>
+                        {!selectedSession.active && (
+                          <button
+                            className="save-settings-btn"
+                            style={{ padding: '4px 12px', fontSize: '0.85rem', marginLeft: 'auto', background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                            onClick={() => resumeSession(selectedSession)}
+                          >
+                            Retomar Sesión
+                          </button>
+                        )}
                       </div>
                       {loadingSessionMessages ? (
                         <p className="modal-history-message">Cargando mensajes...</p>
