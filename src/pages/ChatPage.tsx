@@ -4,31 +4,31 @@ import CameraPanel from '../components/Camera/CameraPanel'
 import ChatWindow from '../components/Chat/ChatWindow'
 import { useAuth } from '../context/AuthContext'
 import { userService } from '../services/api'
-import type { EmocionDetectada, UserProfile } from '../types/domain'
+import type { DetectedEmotion, UserProfile } from '../types/domain'
 
 export default function ChatPage() {
-  const [emocionActual, setEmocionActual] = useState<EmocionDetectada>({ type: 'NEUTRAL', intensity: 0 })
+  const [detectedEmotion, setDetectedEmotion] = useState<DetectedEmotion>({ type: 'NEUTRAL', intensity: 0 })
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const { usuario, logout } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
-    const userId = usuario?.id || (usuario as any)?.usuarioId
+    const userId = user?.id
     if (userId) {
       userService.getProfile(userId)
         .then(res => setProfile(res.data))
         .catch(err => console.error("Error fetching profile:", err))
     }
-  }, [usuario])
+  }, [user])
 
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
 
-  const userName = usuario?.name || (usuario as any)?.nombre || 'Usuario'
+  const userName = user?.name || 'Usuario'
 
-  const rawType = emocionActual?.type || (emocionActual as any)?.tipo || 'NEUTRAL';
+  const rawType = detectedEmotion?.type || 'NEUTRAL';
   
   // Mapping for emoji representation
   const getEmotionEmoji = (type: string) => {
@@ -84,7 +84,7 @@ export default function ChatPage() {
 
         <div className="sidebar-scroll-area">
           <div className="sidebar-camera-section">
-            <CameraPanel onEmocionCambia={setEmocionActual} />
+            <CameraPanel onEmotionChange={setDetectedEmotion} />
           </div>
 
           <div className="sidebar-therapist-info">
@@ -134,7 +134,7 @@ export default function ChatPage() {
 
       {/* Main Chat Area Blanco */}
       <main className="chat-main-light">
-        <ChatWindow currentEmotion={emocionActual} emocionActual={emocionActual} profile={profile} />
+        <ChatWindow currentEmotion={detectedEmotion} profile={profile} />
       </main>
     </div>
   )

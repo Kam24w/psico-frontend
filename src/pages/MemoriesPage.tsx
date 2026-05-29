@@ -7,7 +7,7 @@ import AddMemoryModal from '../components/Memory/AddMemoryModal'
 import type { UserMemory, EmotionType, UserProfile } from '../types/domain'
 
 export default function MemoriesPage() {
-  const { usuario, logout } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [memories, setMemories] = useState<UserMemory[]>([])
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -15,8 +15,8 @@ export default function MemoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const fetchMemoriesAndProfile = async () => {
-    if (!usuario) return
-    const userId = usuario.id || (usuario as any).usuarioId
+    if (!user) return
+    const userId = user.id
     if (!userId) {
         setLoading(false)
         return
@@ -38,11 +38,11 @@ export default function MemoriesPage() {
 
   useEffect(() => {
     fetchMemoriesAndProfile()
-  }, [usuario])
+  }, [user])
 
   const handleSaveMemory = async (text: string, emotion: EmotionType) => {
-    if (!usuario) return
-    const userId = usuario.id || (usuario as any).usuarioId
+    if (!user) return
+    const userId = user.id
     await memoryService.saveMemory(userId, text, emotion)
     await fetchMemoriesAndProfile() // Recargar memorias
   }
@@ -52,7 +52,7 @@ export default function MemoriesPage() {
     navigate('/login')
   }
 
-  const userName = usuario?.name || (usuario as any)?.nombre || 'Usuario'
+  const userName = user?.name || 'Usuario'
 
   return (
     <div className="memories-page">

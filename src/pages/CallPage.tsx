@@ -31,7 +31,7 @@ export default function CallPage() {
 
   // Fetch profile to get avatarUrl
   useEffect(() => {
-    const userId = user?.id || (user as any)?.usuarioId
+    const userId = user?.id
     if (userId) {
       userService.getProfile(userId)
         .then(res => setProfile(res.data))

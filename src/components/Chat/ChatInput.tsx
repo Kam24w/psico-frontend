@@ -4,13 +4,13 @@ import { UI_TEXTS } from '../../constants/texts'
 import { useToast } from '../../context/ToastContext'
 
 interface ChatInputProps {
-  onEnviar: (contenido: string) => void;
-  cargando: boolean;
+  onSend: (content: string) => void;
+  loading: boolean;
 }
 
-export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
+export default function ChatInput({ onSend, loading }: ChatInputProps) {
   const texts = UI_TEXTS.chatInput
-  const [texto, setTexto] = useState('')
+  const [text, setText] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -22,7 +22,7 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
     if (!ta) return
     ta.style.height = 'auto'
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
-  }, [texto])
+  }, [text])
 
   useEffect(() => {
     // Inicializar SpeechRecognition si está disponible
@@ -35,7 +35,7 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
 
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript
-        setTexto((prev) => prev ? prev + ' ' + transcript : transcript)
+        setText((prev) => prev ? prev + ' ' + transcript : transcript)
       }
 
       recognition.onerror = (event: any) => {
@@ -61,17 +61,17 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!texto.trim() || cargando) return
-    onEnviar(texto.trim())
-    setTexto('')
+    if (!text.trim() || loading) return
+    onSend(text.trim())
+    setText('')
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      if (!texto.trim() || cargando) return
-      onEnviar(texto.trim())
-      setTexto('')
+      if (!text.trim() || loading) return
+      onSend(text.trim())
+      setText('')
     }
   }
 
@@ -106,7 +106,7 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
     }
   }
 
-  const hasText = texto.trim().length > 0
+  const hasText = text.trim().length > 0
 
   return (
     <div className="light-input-container">
@@ -115,11 +115,11 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
           ref={textareaRef}
           className="light-textarea"
           placeholder="Escribe tu mensaje..."
-          value={texto}
-          onChange={e => setTexto(e.target.value)}
+          value={text}
+          onChange={e => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           rows={1}
-          disabled={cargando}
+          disabled={loading}
         />
 
         <div className="light-input-actions">
@@ -153,10 +153,10 @@ export default function ChatInput({ onEnviar, cargando }: ChatInputProps) {
           
           <button
             type="submit"
-            className={`light-send-btn ${hasText && !cargando ? 'ready' : ''}`}
-            disabled={!hasText || cargando}
+            className={`light-send-btn ${hasText && !loading ? 'ready' : ''}`}
+            disabled={!hasText || loading}
           >
-            {cargando ? (
+            {loading ? (
               <span className="light-spinner" />
             ) : (
               <svg viewBox="0 0 24 24" width="18" height="18" stroke="white" strokeWidth="2" fill="white" strokeLinecap="round" strokeLinejoin="round">

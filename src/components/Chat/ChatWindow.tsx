@@ -8,13 +8,12 @@ import type { DetectedEmotion, Message, Conversation, UserProfile } from '../../
 
 interface ChatWindowProps {
   currentEmotion: DetectedEmotion;
-  emocionActual?: DetectedEmotion; // Compatibility alias
   profile?: UserProfile | null;
 }
 
-export default function ChatWindow({ currentEmotion, emocionActual, profile }: ChatWindowProps) {
+export default function ChatWindow({ currentEmotion, profile }: ChatWindowProps) {
   const { user } = useAuth()
-  const activeEmotion = currentEmotion || emocionActual;
+  const activeEmotion = currentEmotion;
   
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
@@ -300,7 +299,7 @@ export default function ChatWindow({ currentEmotion, emocionActual, profile }: C
       {/* Messages */}
       <div className="light-cw-messages">
         {messages.map(msg => (
-          <ChatBubble key={msg.id} mensaje={msg} profile={profile} />
+          <ChatBubble key={msg.id} message={msg} profile={profile} />
         ))}
 
         {loading && (
@@ -321,7 +320,7 @@ export default function ChatWindow({ currentEmotion, emocionActual, profile }: C
 
       {/* Footer / Input Area */}
       <footer className="light-cw-footer">
-        <ChatInput onEnviar={sendMessage} cargando={loading} />
+        <ChatInput onSend={sendMessage} loading={loading} />
       </footer>
 
       {/* ── Confirmación Nueva Sesión ─────────────────────────────────────── */}

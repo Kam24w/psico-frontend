@@ -1,29 +1,29 @@
 import { useRef, useEffect, useState } from 'react'
 import { useEmotionDetector } from '../../hooks/useEmotionDetector'
 import EmotionBadge from './EmotionBadge'
-import type { EmocionDetectada } from '../../types/domain'
+import type { DetectedEmotion } from '../../types/domain'
 import { UI_TEXTS } from '../../constants/texts'
 import { useAuth } from '../../context/AuthContext'
 
 interface CameraPanelProps {
-  onEmocionCambia?: (emocion: EmocionDetectada) => void;
+  onEmotionChange?: (emotion: DetectedEmotion) => void;
 }
 
-export default function CameraPanel({ onEmocionCambia }: CameraPanelProps) {
+export default function CameraPanel({ onEmotionChange }: CameraPanelProps) {
   const texts = UI_TEXTS.camera
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isCameraOff, setIsCameraOff] = useState(false)
   const { user } = useAuth()
   
-  // Siempre pasamos el videoRef para que siga detectando emociones, incluso si está oculto visualmente.
-  const { emocionActual, modelosCargados, errorCamara } = useEmotionDetector(videoRef)
+  // Always pass videoRef so emotion detection continues even when visually hidden.
+  const { currentEmotion, modelsLoaded, cameraError } = useEmotionDetector(videoRef)
 
-  // Notificar al padre cuando cambia la emoción de forma segura
+  // Notify parent when emotion changes
   useEffect(() => {
-    if (onEmocionCambia) {
-      onEmocionCambia(emocionActual)
+    if (onEmotionChange) {
+      onEmotionChange(currentEmotion)
     }
-  }, [emocionActual, onEmocionCambia])
+  }, [currentEmotion, onEmotionChange])
 
   return (
     <div className="camera-panel">
@@ -46,13 +46,13 @@ export default function CameraPanel({ onEmocionCambia }: CameraPanelProps) {
           </div>
         )}
 
-        {!modelosCargados && (
+        {!modelsLoaded && (
           <div className="camera-overlay" style={{ zIndex: 6 }}>
             <span className="camera-overlay-text">🔄 {texts.loadingDetection}</span>
           </div>
         )}
 
-        {!errorCamara && (
+        {!cameraError && (
           <button
             onClick={() => setIsCameraOff(!isCameraOff)}
             style={{
@@ -80,11 +80,11 @@ export default function CameraPanel({ onEmocionCambia }: CameraPanelProps) {
         )}
       </div>
 
-      {errorCamara && (
-        <p className="camera-error">⚠️ {texts.cameraAccessErrorPrefix} {errorCamara}</p>
+      {cameraError && (
+        <p className="camera-error">⚠️ {texts.cameraAccessErrorPrefix} {cameraError}</p>
       )}
 
-      <EmotionBadge emocion={emocionActual} />
+      <EmotionBadge emotion={currentEmotion} />
 
       <p className="camera-hint">
         {texts.hint}

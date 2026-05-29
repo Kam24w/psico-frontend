@@ -5,7 +5,7 @@ import { dashboardService, userService } from '../services/api'
 import type { DashboardSummary, UserProfile } from '../types/domain'
 
 export default function DashboardPage() {
-  const { usuario, logout } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const userId = usuario?.id || (usuario as any)?.usuarioId
+    const userId = user?.id
     if (userId) {
       Promise.all([
         dashboardService.getSummary(userId),
@@ -28,14 +28,14 @@ export default function DashboardPage() {
     } else {
       setLoading(false)
     }
-  }, [usuario])
+  }, [user])
 
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
 
-  const userName = usuario?.name || (usuario as any)?.nombre || 'Usuario'
+  const userName = user?.name || 'Usuario'
 
   const getY = (score: number) => 100 - score;
   const progress = summary?.weeklyProgress || [50, 50, 50, 50, 50, 50, 50];

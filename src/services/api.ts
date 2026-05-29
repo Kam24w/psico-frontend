@@ -22,7 +22,7 @@ const api = axios.create({
 
 // Interceptor: añade token JWT a cada petición
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('psico_token')
+  const token = localStorage.getItem('mindsee_token')
   if (token) {
     if (config.headers) {
       ;(config.headers as Record<string, string>).Authorization = `Bearer ${token}`
@@ -47,8 +47,8 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
-      localStorage.removeItem('psico_token')
-      localStorage.removeItem('psico_usuario')
+      localStorage.removeItem('mindsee_token')
+      localStorage.removeItem('mindsee_user')
       window.location.href = '/login'
     }
     return Promise.reject(error)
@@ -89,7 +89,7 @@ export const conversationService = {
 
   /** Inicia una sesión de voz con un saludo de la IA */
   initiateConversation: (emotion: EmotionType, type: string = 'VIDEO') =>
-    api.post<Message>('/api/conversations/initiate', { emotion, tipo: type }),
+    api.post<Message>('/api/conversations/initiate', { emotion, type }),
 
   /** Cierra la sesión activa actual para empezar una nueva */
   closeActiveSession: (userId: number, sessionType: string = 'TEXTO') =>
@@ -166,10 +166,5 @@ export const interventionService = {
   suggestExercises: (emotion: EmotionType) =>
     api.get<Recommendation[]>('/api/therapy/exercises', { params: { emotion } }),
 }
-
-// ── Aliases de Compatibilidad ─────────────────────────────────────────────────
-export const conversacionService = conversationService;
-export const emocionService = emotionService;
-export const intervencionService = interventionService;
 
 export default api
