@@ -18,11 +18,27 @@ export default function RegisterPage() {
 
   const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const { login }             = useAuth()
   const navigate              = useNavigate()
 
+  // Validaciones de contraseña
+  const hasMinLength = form.password.length >= 8;
+  const hasUpper = /[A-Z]/.test(form.password);
+  const hasLower = /[a-z]/.test(form.password);
+  const hasNumber = /[0-9]/.test(form.password);
+  const hasSpecial = /[@$!%*?&._-]/.test(form.password);
+
+  const isPasswordValid = hasMinLength && hasUpper && hasLower && hasNumber && hasSpecial;
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    if (!isPasswordValid) {
+      setError('La contraseña no cumple con los requisitos mínimos')
+      return
+    }
 
     if (form.password !== form.confirmPassword) {
       setError('Las contraseñas no coinciden')
@@ -78,7 +94,7 @@ export default function RegisterPage() {
             <input
               className="auth-input" type="text" placeholder="Tu nombre"
             value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
-            maxLength={20}
+            maxLength={100}
             />
           </div>
           <div className="auth-field">
@@ -91,26 +107,89 @@ export default function RegisterPage() {
           </div>
           <div className="auth-field">
             <label className="auth-label">Contraseña</label>
-            <input
-              className="auth-input" type="password" placeholder="••••••••"
-              value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })}
-              required
-              maxLength={20}
-            />
+            <div className="auth-password-wrapper">
+              <input
+                className="auth-input"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+                required
+                maxLength={20}
+              />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                )}
+              </button>
+            </div>
+            
+            {/* Recomendaciones de contraseña */}
+            <div className="password-requirements" style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+              <div style={{ color: hasMinLength ? '#10b981' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '14px' }}>{hasMinLength ? '✓' : '•'}</span> Mínimo 8 caracteres
+              </div>
+              <div style={{ color: hasUpper ? '#10b981' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '14px' }}>{hasUpper ? '✓' : '•'}</span> Al menos 1 mayúscula
+              </div>
+              <div style={{ color: hasLower ? '#10b981' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '14px' }}>{hasLower ? '✓' : '•'}</span> Al menos 1 minúscula
+              </div>
+              <div style={{ color: hasNumber ? '#10b981' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '14px' }}>{hasNumber ? '✓' : '•'}</span> Al menos 1 número
+              </div>
+              <div style={{ color: hasSpecial ? '#10b981' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '14px' }}>{hasSpecial ? '✓' : '•'}</span> Al menos 1 carácter especial
+              </div>
+            </div>
           </div>
           <div className="auth-field">
             <label className="auth-label">Confirmar contraseña</label>
-            <input
-              className="auth-input" type="password" placeholder="••••••••"
-              value={form.confirmPassword}
-              onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
-              required
-              maxLength={20}
-            />
+            <div className="auth-password-wrapper">
+              <input
+                className="auth-input"
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={form.confirmPassword}
+                onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
+                required
+                maxLength={20}
+              />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showConfirmPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
           {error && <p className="auth-error">{error}</p>}
-          <button className="auth-button" type="submit" disabled={loading}>
+          <button className="auth-button" type="submit" disabled={loading || !isPasswordValid}>
             {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
           </button>
         </form>
