@@ -32,10 +32,11 @@ export default function RegisterPage() {
     setLoading(true)
     setError('')
     try {
+      const encodedPassword = btoa(unescape(encodeURIComponent(form.password || '')))
       const res = await authService.register({
         name:     form.name,
         email:    form.email,
-        password: form.password,
+        password: encodedPassword,
       })
       login(res.data)
       navigate('/dashboard')
