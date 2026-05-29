@@ -20,7 +20,11 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await authService.login(form)
+      const encodedPassword = btoa(unescape(encodeURIComponent(form.password)))
+      const res = await authService.login({
+        ...form,
+        password: encodedPassword
+      })
       login(res.data)
       navigate('/dashboard')
     } catch (err) {
