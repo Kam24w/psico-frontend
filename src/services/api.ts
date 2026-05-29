@@ -147,6 +147,10 @@ export const userService = {
   /** Actualiza las preferencias (espera JSON en formato string) */
   updatePreferences: (userId: number, preferences: string) =>
     api.put<UserProfile>(`/api/users/${userId}/preferences`, { preferences }),
+
+  /** Actualiza la foto de perfil en Base64 */
+  updateAvatar: (userId: number, avatarUrl: string) =>
+    api.put<UserProfile>(`/api/users/${userId}/avatar`, { avatarUrl }),
 }
 
 // ── Intervention ────────────────────────────────────────────────────────────
