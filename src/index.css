@@ -6,30 +6,30 @@
    ========================================= */
 
 :root {
-  /* Modo Claro */
-  --bg-main: linear-gradient(150deg, #f0f2f5 0%, #ffffff 40%, #e2e8f0 100%);
-  --text-main: #1e293b;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
+  /* Tema Claro Amigable (Soft Peach & Lavender) */
+  --bg-main: linear-gradient(150deg, #FDFBF7 0%, #F3E8FF 50%, #E0E7FF 100%);
+  --text-main: #312E81;
+  --text-secondary: #4F46E5;
+  --text-muted: rgba(49, 46, 129, 0.6);
   
-  --card-bg: rgba(255, 255, 255, 0.85);
-  --card-bg-hover: rgba(255, 255, 255, 0.95);
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-bg-hover: rgba(255, 255, 255, 0.85);
   --border-color: rgba(99, 102, 241, 0.2);
   --border-color-light: rgba(99, 102, 241, 0.1);
-  --nav-bg: rgba(255, 255, 255, 0.75);
+  --nav-bg: rgba(255, 255, 255, 0.6);
   
   --shadow-color: rgba(0, 0, 0, 0.05);
-  --shadow-strong: rgba(0, 0, 0, 0.1);
+  --shadow-strong: rgba(0, 0, 0, 0.15);
   
   --input-bg: rgba(255, 255, 255, 0.9);
   
-  --blob-1: rgba(99, 102, 241, 0.2);
-  --blob-2: rgba(20, 184, 166, 0.2);
-  --blob-3: rgba(167, 139, 250, 0.2);
+  --blob-1: rgba(244, 114, 182, 0.2);
+  --blob-2: rgba(167, 139, 250, 0.2);
+  --blob-3: rgba(96, 165, 250, 0.2);
 }
 
 [data-theme="dark"] {
-  /* Modo Oscuro Amigable (Soft Midnight Rose) */
+  /* Tema Oscuro Amigable (Soft Midnight Rose) */
   --bg-main: linear-gradient(150deg, #1F1D36 0%, #3F3351 50%, #864879 100%);
   --text-main: #F4EEFF;
   --text-secondary: #E5D9F2;
