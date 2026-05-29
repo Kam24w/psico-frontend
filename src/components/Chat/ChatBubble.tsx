@@ -1,6 +1,6 @@
 // Burbuja de mensaje individual del chat
 import { useEffect, useRef } from 'react'
-import type { Mensaje, TipoEmocion } from '../../types/domain'
+import type { Mensaje, TipoEmocion, UserProfile } from '../../types/domain'
 
 function formatearHora(fecha: string): string {
   const date = new Date(fecha)
@@ -8,7 +8,7 @@ function formatearHora(fecha: string): string {
   return date.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })
 }
 
-export default function ChatBubble({ mensaje }: { mensaje: Mensaje }) {
+export default function ChatBubble({ mensaje, profile }: { mensaje: Mensaje, profile?: UserProfile | null }) {
   const esIA     = mensaje.sender === 'AI'
   const hora     = formatearHora(mensaje.createdAt)
   const bubbleRef = useRef<HTMLDivElement>(null)
@@ -50,8 +50,12 @@ export default function ChatBubble({ mensaje }: { mensaje: Mensaje }) {
       </div>
 
       {!esIA && (
-        <div className="light-avatar light-avatar-user" aria-label="Usuario">
-          TÚ
+        <div className="light-avatar light-avatar-user" aria-label="Usuario" style={{ overflow: 'hidden', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {profile?.avatarUrl ? (
+            <img src={profile.avatarUrl} alt="Avatar Usuario" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span>TÚ</span>
+          )}
         </div>
       )}
     </div>

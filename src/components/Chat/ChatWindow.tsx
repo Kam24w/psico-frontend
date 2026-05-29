@@ -4,14 +4,15 @@ import ChatInput from './ChatInput'
 import { conversationService } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import type { DetectedEmotion, Message, Conversation } from '../../types/domain'
+import type { DetectedEmotion, Message, Conversation, UserProfile } from '../../types/domain'
 
 interface ChatWindowProps {
   currentEmotion: DetectedEmotion;
   emocionActual?: DetectedEmotion; // Compatibility alias
+  profile?: UserProfile | null;
 }
 
-export default function ChatWindow({ currentEmotion, emocionActual }: ChatWindowProps) {
+export default function ChatWindow({ currentEmotion, emocionActual, profile }: ChatWindowProps) {
   const { user } = useAuth()
   const activeEmotion = currentEmotion || emocionActual;
   
@@ -299,7 +300,7 @@ export default function ChatWindow({ currentEmotion, emocionActual }: ChatWindow
       {/* Messages */}
       <div className="light-cw-messages">
         {messages.map(msg => (
-          <ChatBubble key={msg.id} mensaje={msg} />
+          <ChatBubble key={msg.id} mensaje={msg} profile={profile} />
         ))}
 
         {loading && (
