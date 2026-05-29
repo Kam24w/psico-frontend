@@ -120,6 +120,7 @@ export default function ChatInput({ onSend, loading }: ChatInputProps) {
           onKeyDown={handleKeyDown}
           rows={1}
           disabled={loading}
+          maxLength={800}
         />
 
         <div className="light-input-actions">
