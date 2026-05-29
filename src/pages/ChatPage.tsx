@@ -134,7 +134,7 @@ export default function ChatPage() {
 
       {/* Main Chat Area Blanco */}
       <main className="chat-main-light">
-        <ChatWindow currentEmotion={emocionActual} emocionActual={emocionActual} />
+        <ChatWindow currentEmotion={emocionActual} emocionActual={emocionActual} profile={profile} />
       </main>
     </div>
   )
