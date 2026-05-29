@@ -123,7 +123,7 @@ export const emotionService = {
 export const memoryService = {
   /** Guarda un nuevo recuerdo/memoria */
   saveMemory: (userId: number, content: string, associatedEmotion: EmotionType) =>
-    api.post<UserMemory>('/api/memories', null, { params: { userId, content, associatedEmotion } }),
+    api.post<UserMemory>(`/api/memories/${userId}`, { content, associatedEmotion }),
 
   /** Obtiene la lista de memorias de un usuario */
   getMemories: (userId: number) =>
