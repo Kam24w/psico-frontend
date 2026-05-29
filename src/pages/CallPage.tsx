@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import { useEmotionDetector } from '../hooks/useEmotionDetector'
 import { conversationService } from '../services/api'
 import type { EmotionType } from '../types/domain'
@@ -21,6 +22,7 @@ const EMOTION_LABELS_ES: Record<string, string> = {
 export default function CallPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { showConfirm } = useToast()
   const videoRef = useRef<HTMLVideoElement>(null)
 
   // ── UI States (Moved up for hook dependency) ────────────────────────
@@ -368,12 +370,17 @@ export default function CallPage() {
     }
   }
 
-  const endCall = () => {
-    stopListening()
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel()
-    }
-    navigate('/chat')
+  const handleExit = (path: string) => {
+    showConfirm(
+      'Si sales de la llamada, no podrás retomarla desde este punto. ¿Estás seguro de que deseas salir?',
+      () => {
+        stopListening()
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+          window.speechSynthesis.cancel()
+        }
+        navigate(path)
+      }
+    )
   }
 
   const getHeaderSubtitle = () => {
@@ -535,7 +542,7 @@ export default function CallPage() {
 
           <button
             className="call-dock-btn secondary-action"
-            onClick={() => navigate('/chat')}
+            onClick={() => handleExit('/chat')}
           >
             <span className="btn-icon">💬</span>
             <span className="btn-text">Chat de Texto</span>
@@ -543,7 +550,7 @@ export default function CallPage() {
 
           <button
             className="call-dock-btn secondary-action"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => handleExit('/dashboard')}
           >
             <span className="btn-icon">🎛️</span>
             <span className="btn-text">Panel</span>
@@ -551,7 +558,7 @@ export default function CallPage() {
 
           <button
             className="call-dock-btn end-call"
-            onClick={endCall}
+            onClick={() => handleExit('/chat')}
           >
             <span className="btn-icon">✖</span>
             <span className="btn-text">Finalizar</span>
