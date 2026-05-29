@@ -25,8 +25,15 @@ src/
 ├── main.tsx                    # Punto de entrada de React, monta la aplicación en el DOM y la envuelve en el proveedor de sesión global.
 ├── index.css                   # Hoja de estilos principal del sistema. Define los tokens estéticos (colores de emociones, gradientes, glassmorphism y fuentes de Google Fonts).
 │
+├── constants/                  # Constantes y textos centralizados
+│   └── texts.ts                # Diccionario de textos (UI) de la aplicación para facilitar mantenimiento e internacionalización.
+│
 ├── context/                    # Contextos y Manejo de Estado Global
-│   └── AuthContext.tsx         # [Context Provider] Gestiona la sesión del usuario. Almacena el token JWT, metadatos, y provee las funciones `login`, `register` y `logout` con persistencia en localStorage.
+│   ├── AuthContext.tsx         # [Context Provider] Gestiona la sesión del usuario. Almacena el token JWT, metadatos, y provee las funciones `login`, `register` y `logout`.
+│   └── ToastContext.tsx        # [Context Provider] Sistema global de notificaciones (toasts) y modales de confirmación interactivos.
+│
+├── types/                      # Definiciones de Tipos TypeScript
+│   └── domain.ts               # Tipos e interfaces globales del dominio (User, Message, EmotionType, etc.) estandarizados en inglés.
 │
 ├── hooks/                      # Hooks Personalizados
 │   └── useEmotionDetector.ts   # [Hook de face-api.js] Encargado de cargar en memoria los pesos de la red neuronal facial, inicializar la webcam, capturar frames periódicos del canvas y retornar la emoción activa del usuario.

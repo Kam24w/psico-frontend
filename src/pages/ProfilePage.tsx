@@ -6,7 +6,7 @@ import { userService } from '../services/api'
 import type { UserProfile } from '../types/domain'
 
 export default function ProfilePage() {
-  const { usuario, logout } = useAuth()
+  const { user, logout } = useAuth()
   const { showConfirm, showToast } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
@@ -18,7 +18,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const userId = usuario?.id || (usuario as any)?.usuarioId
+    const userId = user?.id
     if (userId) {
       userService.getProfile(userId)
         .then(res => setProfile(res.data))
@@ -27,7 +27,7 @@ export default function ProfilePage() {
     } else {
       setLoading(false)
     }
-  }, [usuario])
+  }, [user])
 
   const handleLogout = () => {
     logout()
@@ -54,7 +54,7 @@ export default function ProfilePage() {
     reader.onload = async (event) => {
       const base64String = event.target?.result as string
       try {
-        const userId = usuario?.id || (usuario as any)?.usuarioId
+        const userId = user?.id
         if (userId) {
           const res = await userService.updateAvatar(userId, base64String)
           setProfile(res.data)
@@ -74,7 +74,7 @@ export default function ProfilePage() {
     reader.readAsDataURL(file)
   }
 
-  const userName = usuario?.name || (usuario as any)?.nombre || 'Usuario'
+  const userName = user?.name || 'Usuario'
 
   return (
     <div className="dash-app-layout">

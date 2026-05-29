@@ -1,5 +1,5 @@
 // Muestra la emoción detectada en tiempo real
-import type { EmocionDetectada, TipoEmocion } from '../../types/domain'
+import type { DetectedEmotion, EmotionType } from '../../types/domain'
 import { UI_TEXTS } from '../../constants/texts'
 
 const EMOCIONES: Record<string, { emoji: string; label: string; color: string }> = {
@@ -20,12 +20,12 @@ const EMOCIONES: Record<string, { emoji: string; label: string; color: string }>
 }
 
 interface EmotionBadgeProps {
-  emocion: EmocionDetectada;
+  emotion: DetectedEmotion;
 }
 
-export default function EmotionBadge({ emocion }: EmotionBadgeProps) {
-  const typeKey = emocion?.type || (emocion as any)?.tipo || 'NEUTRAL'
-  const intensityVal = emocion?.intensity ?? (emocion as any)?.intensidad ?? 0
+export default function EmotionBadge({ emotion }: EmotionBadgeProps) {
+  const typeKey = emotion?.type || (emotion as any)?.tipo || 'NEUTRAL'
+  const intensityVal = emotion?.intensity ?? (emotion as any)?.intensidad ?? 0
   
   const info = EMOCIONES[typeKey] || EMOCIONES.NEUTRAL
   const emotionClass = `emotion-badge-${typeKey.toLowerCase()}`

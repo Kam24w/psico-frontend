@@ -172,15 +172,5 @@ export function useEmotionDetector(videoRef: RefObject<HTMLVideoElement>, should
     }
   }, [modelsLoaded, startCamera, stopDetection, videoRef, shouldStart])
 
-  // Aliases for Spanish transition compatibility
-  return { 
-    currentEmotion, 
-    modelsLoaded, 
-    cameraError, 
-    startCamera,
-    emocionActual: currentEmotion,
-    modelosCargados: modelsLoaded,
-    errorCamara: cameraError,
-    iniciarCamara: startCamera
-  }
+  return { currentEmotion, modelsLoaded, cameraError, startCamera }
 }
