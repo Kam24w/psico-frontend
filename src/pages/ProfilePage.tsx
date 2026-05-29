@@ -1,47 +1,28 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useTheme } from '../context/ThemeContext'
 import { useToast } from '../context/ToastContext'
 import { userService } from '../services/api'
 import type { UserProfile } from '../types/domain'
 
 export default function ProfilePage() {
   const { usuario, logout } = useAuth()
-  const { setTheme } = useTheme()
-  const { showToast, showConfirm } = useToast()
+  const { showConfirm, showToast } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
-  
+
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   
-  // Preferences state
-  const [prefs, setPrefs] = useState({
-    notifications: true,
-    dailyReminder: false,
-    strictTherapyMode: false,
-    darkMode: true
-  })
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const userId = usuario?.id || (usuario as any)?.usuarioId
     if (userId) {
       userService.getProfile(userId)
-        .then(res => {
-          setProfile(res.data)
-          try {
-             if (res.data.preferences && res.data.preferences !== '[]') {
-                const parsed = JSON.parse(res.data.preferences);
-                setPrefs(prev => ({...prev, ...parsed}));
-                if (parsed.darkMode !== undefined) {
-                  setTheme(parsed.darkMode ? 'dark' : 'light');
-                }
-             }
-          } catch(e) {}
-        })
-        .catch(err => console.error("Error fetching profile:", err))
+        .then(res => setProfile(res.data))
+        .catch(err => console.error('Error fetching profile:', err))
         .finally(() => setLoading(false))
     } else {
       setLoading(false)
@@ -53,28 +34,44 @@ export default function ProfilePage() {
     navigate('/login')
   }
 
-  const handleTogglePref = (key: keyof typeof prefs) => {
-    const newPrefs = { ...prefs, [key]: !prefs[key] };
-    setPrefs(newPrefs);
-    if (key === 'darkMode') {
-      setTheme(newPrefs.darkMode ? 'dark' : 'light');
-    }
+  const handleAvatarClick = () => {
+    if (uploading) return
+    fileInputRef.current?.click()
   }
 
-  const handleSavePreferences = async () => {
-    const userId = usuario?.id || (usuario as any)?.usuarioId;
-    if (!userId) return;
-    
-    setSaving(true);
-    try {
-      const res = await userService.updatePreferences(userId, JSON.stringify(prefs));
-      setProfile(res.data);
-      showToast('Preferencias guardadas exitosamente', 'success');
-    } catch(e) {
-      showToast('Error guardando preferencias', 'error');
-    } finally {
-      setSaving(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Limit to 2MB to prevent large base64 strings in DB
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('La imagen es demasiado grande. El máximo es 2MB.', 'error')
+      return
     }
+
+    setUploading(true)
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      const base64String = event.target?.result as string
+      try {
+        const userId = usuario?.id || (usuario as any)?.usuarioId
+        if (userId) {
+          const res = await userService.updateAvatar(userId, base64String)
+          setProfile(res.data)
+          showToast('Foto de perfil actualizada exitosamente', 'success')
+        }
+      } catch (error) {
+        console.error('Error updating avatar:', error)
+        showToast('Error al actualizar la foto de perfil', 'error')
+      } finally {
+        setUploading(false)
+      }
+    }
+    reader.onerror = () => {
+      showToast('Error al procesar la imagen', 'error')
+      setUploading(false)
+    }
+    reader.readAsDataURL(file)
   }
 
   const userName = usuario?.name || (usuario as any)?.nombre || 'Usuario'
@@ -121,11 +118,11 @@ export default function ProfilePage() {
         {/* Main Content Area */}
         <main className="dash-content-area">
           <div className="dash-content-inner">
-            
+
             {/* Header */}
             <header className="dash-page-header" style={{marginBottom: '24px'}}>
               <h1 className="dash-page-title">Tu Perfil</h1>
-              <p className="dash-page-subtitle">Administra tu identidad, preferencias y la forma en que la IA de Mindsee interactúa contigo.</p>
+              <p className="dash-page-subtitle">Administra tu identidad y la forma en que la IA de Mindsee interactúa contigo.</p>
             </header>
 
             {loading ? (
@@ -134,14 +131,35 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="profile-grid">
-                
+
                 {/* Left Column: Personal Info Panel */}
                 <div className="dash-panel profile-info-panel">
                   <div className="profile-banner"></div>
-                  
+
                   <div className="profile-avatar-wrapper">
-                    <div className="profile-avatar-circle">
-                      {profile?.fullName?.charAt(0).toUpperCase() || 'U'}
+                    <input 
+                      type="file" 
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*" 
+                      style={{ display: 'none' }} 
+                    />
+                    <div 
+                      className="profile-avatar-circle" 
+                      onClick={handleAvatarClick}
+                      style={{ opacity: uploading ? 0.5 : 1, cursor: uploading ? 'wait' : 'pointer' }}
+                    >
+                      {profile?.avatarUrl ? (
+                        <img src={profile.avatarUrl} alt="Avatar" />
+                      ) : (
+                        profile?.fullName?.charAt(0).toUpperCase() || 'U'
+                      )}
+                      
+                      {!uploading && (
+                        <div className="profile-avatar-overlay">
+                          📷
+                        </div>
+                      )}
                     </div>
                     <div className="profile-avatar-text">
                       <h2>{profile?.fullName}</h2>
@@ -154,77 +172,20 @@ export default function ProfilePage() {
                         <span className="detail-value emotion-badge">{profile?.currentEmotionalState || 'NEUTRAL'}</span>
                       </div>
                     </div>
-                    
+
                     <p className="profile-read-only-note">
                       Para modificar tu nombre de usuario o correo electrónico, por favor contacta a soporte técnico de Mindsee.
                     </p>
                   </div>
                 </div>
 
-                {/* Right Column: Preferences & Danger Zone */}
+                {/* Right Column: Danger Zone */}
                 <div className="profile-right-column">
-                  
-                  {/* Preferences Panel */}
-                  <div className="dash-panel profile-prefs-panel">
-                    <h3 className="panel-title">Preferencias de la Aplicación</h3>
-                    
-                    <div className="pref-item">
-                      <div className="pref-info-wrapper">
-                        <div className="pref-icon">🔔</div>
-                        <div className="pref-info">
-                          <h4>Notificaciones Push</h4>
-                          <p>Recibir notificaciones cuando la IA detecte alertas críticas.</p>
-                        </div>
-                      </div>
-                      <label className="pref-switch">
-                        <input type="checkbox" checked={prefs.notifications} onChange={() => handleTogglePref('notifications')} />
-                        <span className="pref-slider"></span>
-                      </label>
-                    </div>
-
-                    <div className="pref-item">
-                      <div className="pref-info-wrapper">
-                        <div className="pref-icon">📅</div>
-                        <div className="pref-info">
-                          <h4>Recordatorio Diario</h4>
-                          <p>Recibir un aviso para hacer tu check-in emocional diario.</p>
-                        </div>
-                      </div>
-                      <label className="pref-switch">
-                        <input type="checkbox" checked={prefs.dailyReminder} onChange={() => handleTogglePref('dailyReminder')} />
-                        <span className="pref-slider"></span>
-                      </label>
-                    </div>
-
-                    <div className="pref-item">
-                      <div className="pref-info-wrapper">
-                        <div className="pref-icon">🧠</div>
-                        <div className="pref-info">
-                          <h4>Modo Terapia Estricto</h4>
-                          <p>La IA priorizará análisis técnicos y directos sobre charla casual.</p>
-                        </div>
-                      </div>
-                      <label className="pref-switch">
-                        <input type="checkbox" checked={prefs.strictTherapyMode} onChange={() => handleTogglePref('strictTherapyMode')} />
-                        <span className="pref-slider"></span>
-                      </label>
-                    </div>
-
-                    <button 
-                      className="save-prefs-btn" 
-                      onClick={handleSavePreferences}
-                      disabled={saving}
-                    >
-                      {saving ? 'Guardando...' : 'Guardar Preferencias'}
-                    </button>
-                  </div>
-
-                  {/* Danger Zone */}
                   <div className="dash-panel profile-danger-panel">
                     <h3 className="panel-title danger-title">
                       <span style={{fontSize: '24px'}}>⚠️</span> Zona de Peligro
                     </h3>
-                    
+
                     <div className="danger-action-row">
                       <div className="danger-action-info">
                         <h4>Cerrar Sesión</h4>
@@ -241,8 +202,8 @@ export default function ProfilePage() {
                       <button className="danger-btn disabled" disabled>Eliminar Datos</button>
                     </div>
                   </div>
-
                 </div>
+
               </div>
             )}
 

@@ -124,6 +124,7 @@ export interface UserProfile {
   email: string;
   currentEmotionalState: string;
   preferences: string;
+  avatarUrl?: string;
 }
 
 // ── Aliases de Compatibilidad para Refactorización Progresiva ─────────────────
